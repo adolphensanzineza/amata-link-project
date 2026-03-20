@@ -90,5 +90,17 @@
     "overrides": {
       "vite": "6.3.5"
     }
-  }
+  },
+  "description": "AmataLink is a comprehensive web platform designed to streamline and manage milk productivity, collection, and distribution. It provides dedicated dashboards for Farmers, Collectors, and Administrators to interact seamlessly and efficiently.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adolphensanzineza/amata-link-project.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adolphensanzineza/amata-link-project/issues"
+  },
+  "homepage": "https://github.com/adolphensanzineza/amata-link-project#readme"
 }

@@ -139,6 +139,17 @@ export const adminApi = {
 };
 
 export const reportsApi = {
+    /** Fetch report records as JSON for on-screen display */
+    fetchData: (params: { startDate?: string; endDate?: string; farmerId?: number }) => {
+        const query = new URLSearchParams(
+            Object.fromEntries(
+                Object.entries(params)
+                    .filter(([, v]) => v !== undefined && v !== '')
+                    .map(([k, v]) => [k, String(v)])
+            ) as Record<string, string>
+        ).toString();
+        return apiFetch(`/reports/data${query ? `?${query}` : ''}`);
+    },
     exportPDF: (params: { startDate?: string; endDate?: string; farmerId?: number }) => {
         const query = new URLSearchParams(params as any).toString();
         return `${API_BASE_URL}/reports/export/pdf?${query}&token=${localStorage.getItem('amatalink_token')}`;

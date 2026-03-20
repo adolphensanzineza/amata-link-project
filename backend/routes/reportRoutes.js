@@ -1,13 +1,18 @@
 import express from 'express';
-import { exportPDF, exportExcel } from '../controllers/reportController.js';
+import { exportPDF, exportExcel, getReportData } from '../controllers/reportController.js';
 import { generateAndSendMonthlyReports } from '../controllers/automatedReportController.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Export routes
+// JSON data endpoint — fetch records for on-screen display
+router.get('/data', authenticateToken, getReportData);
+
+// Export routes — support both /pdf and /export/pdf (frontend uses /export/pdf)
 router.get('/pdf', authenticateToken, exportPDF);
+router.get('/export/pdf', authenticateToken, exportPDF);
 router.get('/excel', authenticateToken, exportExcel);
+router.get('/export/excel', authenticateToken, exportExcel);
 
 // Manual trigger for testing (Admin only)
 router.post('/trigger-automated', authenticateToken, requireRole('admin'), async (req, res) => {

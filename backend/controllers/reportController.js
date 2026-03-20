@@ -2,6 +2,66 @@ import pool from '../config/database.js';
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
 
+
+
+
+// ── GET /api/reports/data — returns JSON for on-screen report table ─────────
+export const getReportData = async (req, res) => {
+    try {
+        const { startDate, endDate, farmerId } = req.query;
+        if (!req.user) return res.status(401).json({ message: 'Authentication required' });
+        const { role, id: userId } = req.user;
+
+        let query = `
+          SELECT mr.id, mr.collection_date, mr.collection_time, mr.liters,
+                 mr.rate_per_liter, mr.total_amount, mr.status,
+                 u.full_name  as collector_name,
+                 fu.full_name as farmer_name, fu.phone as farmer_phone,
+                 fu.village, fu.sector
+          FROM milk_records mr
+          JOIN collectors c  ON mr.collector_id = c.id
+          JOIN users u       ON c.user_id = u.id
+          JOIN farmers f     ON mr.farmer_id = f.id
+          JOIN users fu      ON f.user_id = fu.id
+          WHERE 1=1
+        `;
+        const params = [];
+
+        if (role === 'farmer') {
+            query += ' AND f.user_id = ?';
+            params.push(userId);
+        } else if (role === 'collector') {
+            if (farmerId) { query += ' AND f.user_id = ?'; params.push(farmerId); }
+        } else if (role === 'admin' && farmerId) {
+            query += ' AND f.user_id = ?';
+            params.push(farmerId);
+        }
+
+        if (startDate) { query += ' AND mr.collection_date >= ?'; params.push(startDate); }
+        if (endDate)   { query += ' AND mr.collection_date <= ?'; params.push(endDate); }
+        query += ' ORDER BY mr.collection_date DESC, mr.collection_time DESC';
+
+        const [records] = await pool.execute(query, params);
+
+        const totalLiters  = records.reduce((s, r) => s + Number(r.liters      || 0), 0);
+        const totalAmount  = records.reduce((s, r) => s + Number(r.total_amount || 0), 0);
+
+        res.json({
+            records,
+            summary: {
+                totalRecords: records.length,
+                totalLiters:  +totalLiters.toFixed(2),
+                totalAmount:  +totalAmount.toFixed(2),
+            },
+            startDate: startDate || null,
+            endDate:   endDate   || null,
+        });
+    } catch (error) {
+        console.error('Get report data error:', error);
+        res.status(500).json({ message: 'Error fetching report data' });
+    }
+};
+
 export const buildPDFReport = (records, startDate, endDate, doc, isBuffer = false) => {
     // Header
     doc.fillColor('#1e293b').fontSize(24).font('Helvetica-Bold').text('AmataLink Dairy Network', { align: 'center' });
