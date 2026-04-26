@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import { sendRegistrationStatusEmail, sendPriceChangeEmail } from './emailUtils.js';
 
 // Persistent settings table (single row config)
 await pool.execute(`
@@ -11,6 +12,30 @@ await pool.execute(`
   )
 `);
 await pool.execute('INSERT IGNORE INTO settings (id) VALUES (1)');
+
+// Auto-migrate: add collector_id to farmers table (ownership link)
+const [[{ cnt: collectorIdCol }]] = await pool.query(
+  `SELECT COUNT(*) as cnt FROM information_schema.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'farmers' AND COLUMN_NAME = 'collector_id'`
+);
+if (collectorIdCol === 0) {
+  await pool.execute('ALTER TABLE farmers ADD COLUMN collector_id INT NULL');
+  console.log('[Migration] Added farmers.collector_id column');
+}
+
+// Ensure existing farmers have a collector_id (backfill via sector match)
+const [[{ nullCount }]] = await pool.query('SELECT COUNT(*) as nullCount FROM farmers WHERE collector_id IS NULL');
+if (nullCount > 0) {
+  await pool.execute(`
+    UPDATE farmers f
+    JOIN users u_f ON f.user_id = u_f.id
+    JOIN users u_c ON u_f.sector <=> u_c.sector AND u_c.role = 'collector'
+    JOIN collectors c ON u_c.id = c.user_id
+    SET f.collector_id = c.id
+    WHERE f.collector_id IS NULL
+  `);
+  console.log(`[Migration] Backfilled ${nullCount} farmers via sector match`);
+}
 
 // Get settings from DB
 export const getSettings = async (req, res) => {
@@ -37,7 +62,13 @@ export const getSettings = async (req, res) => {
 export const updateSettings = async (req, res) => {
   try {
     const { milkPricePerLiter, siteName, defaultCurrency } = req.body;
-    
+
+    // 1. Get current settings to check if price changed
+    const [current] = await pool.execute('SELECT milkPricePerLiter FROM settings WHERE id = 1');
+    const oldPrice = current.length > 0 ? Number(current[0].milkPricePerLiter) : null;
+    const newPrice = milkPricePerLiter ? Number(milkPricePerLiter) : oldPrice;
+
+    // 2. Perform the update
     await pool.execute(
       `INSERT INTO settings (id, milkPricePerLiter, siteName, defaultCurrency) 
        VALUES (1, ?, ?, ?) 
@@ -51,7 +82,36 @@ export const updateSettings = async (req, res) => {
       ]
     );
 
-    res.json({ message: 'Settings updated successfully and persisted to database' });
+    // 3. Notify farmers if price changed
+    if (milkPricePerLiter && oldPrice !== null && Number(milkPricePerLiter) !== oldPrice) {
+      try {
+        // Get all farmers
+        const [farmers] = await pool.execute(
+          "SELECT id, email, full_name FROM users WHERE role = 'farmer'"
+        );
+
+        for (const farmer of farmers) {
+          // Send Email
+          await sendPriceChangeEmail(farmer.email, farmer.full_name, oldPrice, milkPricePerLiter);
+
+          // Add to internal notifications
+          await pool.execute(
+            'INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)',
+            [
+              farmer.id,
+              'Igiciro cyahindutse / Price Changed',
+              `Igiciro cy'amata cyahindutse kiva kuri ${oldPrice} RWF kijya kuri ${milkPricePerLiter} RWF kuri litiro.`,
+              'alert'
+            ]
+          );
+        }
+        console.log(`✅ Price change notifications sent to ${farmers.length} farmers`);
+      } catch (notifyError) {
+        console.error('Error sending price change notifications:', notifyError);
+      }
+    }
+
+    res.json({ message: 'Settings updated successfully and notifications sent if applicable' });
   } catch (error) {
     console.error('Update settings error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -62,9 +122,12 @@ export const updateSettings = async (req, res) => {
 export const getAllFarmers = async (req, res) => {
   try {
     const [farmers] = await pool.execute(
-      `SELECT f.*, u.username, u.email, u.full_name, u.phone, u.village, u.sector, u.created_at 
+      `SELECT f.*, u.username, u.email, u.full_name, u.phone, u.village, u.sector, u.created_at,
+              cu.full_name as collector_name
        FROM farmers f 
        JOIN users u ON f.user_id = u.id 
+       LEFT JOIN collectors c ON f.collector_id = c.id
+       LEFT JOIN users cu ON c.user_id = cu.id
        ORDER BY u.created_at DESC`
     );
     res.json(farmers);
@@ -353,11 +416,16 @@ export const deleteMilkRecord = async (req, res) => {
 // Create new user (admin can create admin or collector)
 export const createUser = async (req, res) => {
   try {
-    const { email, password, fullName, phone, role, village, sector } = req.body;
+    const { email, password, fullName, phone, role, village, sector, collector_id } = req.body;
     let { username } = req.body;
 
-    if (!role || !['admin', 'collector'].includes(role)) {
-      return res.status(400).json({ message: 'Admin can only create admin or collector accounts' });
+    if (!role || !['admin', 'collector', 'farmer'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role. Must be admin, collector, or farmer' });
+    }
+
+    // Role-based authorization: Collectors can ONLY create farmers
+    if (req.user.role === 'collector' && role !== 'farmer') {
+      return res.status(403).json({ message: 'Collectors can only create farmer accounts' });
     }
 
     if (!username) username = email;
@@ -375,7 +443,7 @@ export const createUser = async (req, res) => {
     const hashedPassword = await bcrypt.default.hash(password, 10);
 
     const [result] = await pool.execute(
-      'INSERT INTO users (username, email, password, full_name, phone, role, village, sector) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO users (username, email, password, full_name, phone, role, village, sector, email_verified, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, "approved")',
       [username, email, hashedPassword, fullName, phone, role, village || null, sector || null]
     );
 
@@ -383,9 +451,43 @@ export const createUser = async (req, res) => {
 
     if (role === 'collector') {
       await pool.execute('INSERT INTO collectors (user_id) VALUES (?)', [userId]);
+    } else if (role === 'farmer') {
+      // If creator is a collector, link the farmer to them.
+      // If creator is admin, use provided collector_id if any.
+      let collectorDbId = collector_id || null;
+      if (req.user && req.user.role === 'collector') {
+        const [collectorRows] = await pool.execute(
+          'SELECT id FROM collectors WHERE user_id = ?', [req.user.id]
+        );
+        if (collectorRows.length > 0) collectorDbId = collectorRows[0].id;
+
+        // Create notification for the collector
+        await pool.execute(
+          'INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)',
+          [
+            req.user.id,
+            'Farmer Added',
+            `New farmer ${fullName} has been added and assigned to you.`,
+            'system'
+          ]
+        );
+      }
+      await pool.execute(
+        'INSERT INTO farmers (user_id, collector_id) VALUES (?, ?)',
+        [userId, collectorDbId]
+      );
     }
 
-    res.status(201).json({ message: 'User created successfully', userId });
+    // Send notification email
+    const creatorRole = req.user.role === 'admin' ? 'Admin' : 'Collector';
+    try {
+      await sendRegistrationStatusEmail(email, fullName, 'approved', creatorRole, req.user.full_name);
+    } catch (emailError) {
+      console.error('Failed to send approval email during user creation:', emailError);
+      // We don't fail the whole request if only the email fails, but we log it
+    }
+
+    res.status(201).json({ message: 'User created successfully and notification email sent', userId });
   } catch (error) {
     console.error('Create user error:', error);
     res.status(500).json({ message: 'Ibyago mu byakozwe' });
@@ -396,22 +498,37 @@ export const createUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { fullName, full_name, email, phone, role } = req.body;
+    const { fullName, full_name, email, phone, role, village, sector, collector_id } = req.body;
     const nameToUpdate = fullName || full_name;
+
+    // Fetch current user data to avoid overwriting fields with null
+    const [currentUser] = await pool.execute('SELECT * FROM users WHERE id = ?', [id]);
+    if (currentUser.length === 0) return res.status(404).json({ message: 'User not found' });
+    const existing = currentUser[0];
 
     // Check if the requesting user is a collector
     if (req.user.role === 'collector') {
-      const [targetUser] = await pool.execute('SELECT role FROM users WHERE id = ?', [id]);
-      if (targetUser.length === 0) return res.status(404).json({ message: 'User not found' });
-      if (targetUser[0].role !== 'farmer') {
+      if (existing.role !== 'farmer') {
         return res.status(403).json({ message: 'Collectors can only update farmer accounts' });
       }
     }
 
     await pool.execute(
-      'UPDATE users SET full_name = ?, email = ?, phone = ? WHERE id = ?',
-      [nameToUpdate, email, phone, id]
+      'UPDATE users SET full_name = ?, email = ?, phone = ?, village = ?, sector = ? WHERE id = ?',
+      [
+        nameToUpdate || existing.full_name,
+        email || existing.email,
+        phone || existing.phone,
+        village !== undefined ? village : existing.village,
+        sector !== undefined ? sector : existing.sector,
+        id
+      ]
     );
+
+    // If admin is updating a farmer, allow changing their collector
+    if (req.user.role === 'admin' && typeof collector_id !== 'undefined') {
+      await pool.execute('UPDATE farmers SET collector_id = ? WHERE user_id = ?', [collector_id, id]);
+    }
 
     res.json({ message: 'User updated successfully' });
   } catch (error) {
@@ -797,6 +914,106 @@ export const fetchUsersAndSendEmails = async (req, res) => {
   }
 };
 
+// Get pending users based on role
+export const getPendingUsers = async (req, res) => {
+  try {
+    const { role } = req.query; // 'farmer' or 'collector'
+    
+    let query = 'SELECT id, username, email, full_name, phone, role, village, sector, created_at FROM users WHERE status = "pending"';
+    const params = [];
+
+    if (role) {
+      query += ' AND role = ?';
+      params.push(role);
+    }
+
+    const [users] = await pool.execute(query, params);
+    res.json(users);
+  } catch (error) {
+    console.error('Get pending users error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Approve a pending user
+export const approveUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // 1. Get user details
+    const [users] = await pool.execute('SELECT * FROM users WHERE id = ?', [id]);
+    if (users.length === 0) return res.status(404).json({ message: 'User not found' });
+    const user = users[0];
+
+    if (user.status !== 'pending') {
+      return res.status(400).json({ message: 'User is not in pending status' });
+    }
+
+    // Authorization checks
+    if (req.user.role === 'collector' && user.role !== 'farmer') {
+      return res.status(403).json({ message: 'Collectors can only approve farmers' });
+    }
+
+    // 2. Create role-specific record if not exists
+    if (user.role === 'farmer') {
+      // Check if already in farmers table
+      const [existing] = await pool.execute('SELECT id FROM farmers WHERE user_id = ?', [id]);
+      if (existing.length === 0) {
+        // Find collector ID if approver is a collector
+        let collectorId = null;
+        if (req.user.role === 'collector') {
+          const [collectors] = await pool.execute('SELECT id FROM collectors WHERE user_id = ?', [req.user.id]);
+          if (collectors.length > 0) collectorId = collectors[0].id;
+        }
+        await pool.execute('INSERT INTO farmers (user_id, collector_id) VALUES (?, ?)', [id, collectorId]);
+      }
+    } else if (user.role === 'collector') {
+      const [existing] = await pool.execute('SELECT id FROM collectors WHERE user_id = ?', [id]);
+      if (existing.length === 0) {
+        await pool.execute('INSERT INTO collectors (user_id) VALUES (?)', [id]);
+      }
+    }
+
+    // 3. Update status to approved
+    await pool.execute('UPDATE users SET status = "approved" WHERE id = ?', [id]);
+
+    // 4. Send notification email
+    const approverRole = req.user.role === 'admin' ? 'Admin' : 'Collector';
+    await sendRegistrationStatusEmail(user.email, user.full_name, 'approved', approverRole, req.user.full_name);
+
+    res.json({ message: 'User approved successfully' });
+  } catch (error) {
+    console.error('Approve user error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Reject a pending user
+export const rejectUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [users] = await pool.execute('SELECT email, full_name, role, status FROM users WHERE id = ?', [id]);
+    if (users.length === 0) return res.status(404).json({ message: 'User not found' });
+    const user = users[0];
+
+    if (req.user.role === 'collector' && user.role !== 'farmer') {
+      return res.status(403).json({ message: 'Collectors can only reject farmers' });
+    }
+
+    await pool.execute('UPDATE users SET status = "rejected" WHERE id = ?', [id]);
+    
+    // Send notification email
+    const approverRole = req.user.role === 'admin' ? 'Admin' : 'Collector';
+    await sendRegistrationStatusEmail(user.email, user.full_name, 'rejected', approverRole, req.user.full_name);
+
+    res.json({ message: 'User registration rejected' });
+  } catch (error) {
+    console.error('Reject user error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 export default {
   getSettings,
   updateSettings,
@@ -816,5 +1033,8 @@ export default {
   createUser,
   updateUser,
   deleteUser,
-  fetchUsersAndSendEmails
+  fetchUsersAndSendEmails,
+  getPendingUsers,
+  approveUser,
+  rejectUser
 };

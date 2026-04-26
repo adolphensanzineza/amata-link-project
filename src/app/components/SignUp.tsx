@@ -76,10 +76,10 @@ export function SignUp({ onNavigate, onSignupSuccess }: SignUpProps) {
       // Register with the backend
       await authApi.register(registrationData);
       
-      toast.success('Your account has been created successfully. Please sign in!');
+      toast.success('Registration request submitted! Please wait for approval.');
       
-      // Navigate straight to the login screen
-      setTimeout(() => onNavigate('signin'), 1500);
+      // Navigate to pending page
+      setTimeout(() => onNavigate('registration-pending'), 1500);
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
     }
@@ -117,47 +117,47 @@ export function SignUp({ onNavigate, onSignupSuccess }: SignUpProps) {
                 </div>
                 <div>
                   <label className="block text-sm text-gray-700 mb-2"><FontAwesomeIcon icon={faUser} className="mr-2" />Full Name *</label>
-                  <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="John Doe" />
+                  <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter your full name" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-700 mb-2"><FontAwesomeIcon icon={faEnvelope} className="mr-2" />Email Address *</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="john@example.com" />
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter your email address" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-700 mb-2"><FontAwesomeIcon icon={faPhone} className="mr-2" />Phone Number *</label>
-                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="+250 788 000 000" />
+                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter your phone number" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-700 mb-2"><FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2" />Village *</label>
-                  <input type="text" name="village" value={formData.village} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Nyamata" />
+                  <input type="text" name="village" value={formData.village} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter your village" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-700 mb-2"><FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2" />Sector *</label>
-                  <input type="text" name="sector" value={formData.sector} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Kigali" />
+                  <input type="text" name="sector" value={formData.sector} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter your sector" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-700 mb-2"><FontAwesomeIcon icon={faLock} className="mr-2" />Password *</label>
                   <div className="relative">
-                    <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange} required minLength={6} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-12" placeholder="Min. 6 characters" />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"><FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} /></button>
+                    <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange} required minLength={6} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-12" placeholder="Create a password" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"><FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} /></button>
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm text-gray-700 mb-2"><FontAwesomeIcon icon={faLock} className="mr-2" />Confirm Password *</label>
                   <div className="relative">
                     <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required minLength={6} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-12" placeholder="Re-enter password" />
-                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"><FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} /></button>
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"><FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} /></button>
                   </div>
                 </div>
               </div>
               <div className="flex items-start">
                 <input type="checkbox" name="agreeToTerms" checked={formData.agreeToTerms} onChange={handleChange} className="w-4 h-4 mt-1 text-green-600 border-gray-300 rounded focus:ring-green-500" />
-                <label className="ml-3 text-sm text-gray-600">I agree to the <button type="button" className="text-green-600 hover:text-green-700">Terms and Conditions</button> and <button type="button" className="text-green-600 hover:text-green-700">Privacy Policy</button></label>
+                <label className="ml-3 text-sm text-gray-600">I agree to the <button type="button" className="text-green-600 hover:text-green-700 cursor-pointer">Terms and Conditions</button> and <button type="button" className="text-green-600 hover:text-green-700 cursor-pointer">Privacy Policy</button></label>
               </div>
-              <button type="submit" className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"><FontAwesomeIcon icon={faUserPlus} />Create Account</button>
+              <button type="submit" className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 cursor-pointer"><FontAwesomeIcon icon={faUserPlus} />Create Account</button>
             </form>
             <div className="mt-6 text-center">
-              <p className="text-gray-600">Already have an account? <button onClick={() => onNavigate('signin')} className="text-green-600 hover:text-green-700 flex items-center justify-center gap-2 mx-auto mt-2"><FontAwesomeIcon icon={faSignInAlt} />Sign in instead</button></p>
+              <p className="text-gray-600">Already have an account? <button onClick={() => onNavigate('signin')} className="text-green-600 hover:text-green-700 flex items-center justify-center gap-2 mx-auto mt-2 cursor-pointer"><FontAwesomeIcon icon={faSignInAlt} />Sign in instead</button></p>
             </div>
           </div>
 

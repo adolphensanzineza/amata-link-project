@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useI18n } from '../../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faCheckCircle, faEnvelope, faInfoCircle, faExclamationTriangle, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCheckCircle, faEnvelope, faInfoCircle, faExclamationTriangle, faMessage, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 
 export default function FarmerNotifications() {
   const { t } = useI18n();
@@ -35,12 +35,17 @@ export default function FarmerNotifications() {
     }
   };
 
-  const getIcon = (title: string) => {
-    const lowTitle = title.toLowerCase();
-    if (lowTitle.includes('milk') || lowTitle.includes('record')) return faInfoCircle;
-    if (lowTitle.includes('user') || lowTitle.includes('account')) return faEnvelope;
-    if (lowTitle.includes('payment') || lowTitle.includes('earn')) return faCheckCircle;
-    return faBell;
+  const getNoteStyles = (note: any) => {
+    if (note.read) return { icon: faBell, color: 'bg-slate-100 text-slate-400' };
+    
+    switch (note.type) {
+      case 'urgent': return { icon: faExclamationCircle, color: 'bg-red-500 text-white shadow-red-500/20' };
+      case 'warning': return { icon: faExclamationTriangle, color: 'bg-orange-500 text-white shadow-orange-500/20' };
+      case 'high': return { icon: faCheckCircle, color: 'bg-emerald-500 text-white shadow-emerald-500/20' };
+      case 'concern': return { icon: faInfoCircle, color: 'bg-blue-500 text-white shadow-blue-500/20' };
+      case 'alert': return { icon: faExclamationCircle, color: 'bg-red-500 text-white shadow-red-500/20' };
+      default: return { icon: faBell, color: 'bg-emerald-500 text-white shadow-emerald-500/20' };
+    }
   };
 
   return (
@@ -67,35 +72,38 @@ export default function FarmerNotifications() {
                 <p className="text-slate-400 font-medium">We'll notify you here for every delivery and payment.</p>
               </motion.div>
             ) : (
-              notes.map((n, idx) => (
-                <motion.div
-                  key={n.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className={`bg-white p-6 rounded-[2rem] border transition-all duration-300 shadow-lg ${n.read ? 'border-slate-100 opacity-70' : 'border-emerald-100 shadow-emerald-500/5'}`}
-                >
-                  <div className="flex items-center gap-6">
-                    <div className={`w-14 h-14 ${n.read ? 'bg-slate-100 text-slate-400' : 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'} rounded-2xl flex items-center justify-center shrink-0`}>
-                      <FontAwesomeIcon icon={getIcon(n.title)} className="text-xl" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-black text-slate-900 tracking-tight">{n.title}</h4>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-lg">
-                          {new Date(n.created_at).toLocaleDateString()}
-                        </span>
+              notes.map((n, idx) => {
+                const styles = getNoteStyles(n);
+                return (
+                  <motion.div
+                    key={n.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className={`bg-white p-6 rounded-[2rem] border transition-all duration-300 shadow-lg ${n.read ? 'border-slate-100 opacity-70' : 'border-emerald-100 shadow-emerald-500/5'}`}
+                  >
+                    <div className="flex items-center gap-6">
+                      <div className={`w-14 h-14 ${styles.color} rounded-2xl flex items-center justify-center shrink-0`}>
+                        <FontAwesomeIcon icon={styles.icon} className="text-xl" />
                       </div>
-                      <p className="text-slate-500 font-medium text-sm leading-relaxed">{n.message}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="font-black text-slate-900 tracking-tight">{n.title}</h4>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-lg">
+                            {new Date(n.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-slate-500 font-medium text-sm leading-relaxed">{n.message}</p>
+                      </div>
+                      {!n.read && (
+                        <button onClick={() => markRead(n.id)} className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all">
+                          <FontAwesomeIcon icon={faCheckCircle} />
+                        </button>
+                      )}
                     </div>
-                    {!n.read && (
-                      <button onClick={() => markRead(n.id)} className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all">
-                        <FontAwesomeIcon icon={faCheckCircle} />
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
-              ))
+                  </motion.div>
+                );
+              })
             )}
           </AnimatePresence>
         </div>

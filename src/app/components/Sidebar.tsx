@@ -2,13 +2,13 @@ import { useState } from 'react';
 import {
     faCow, faChartLine, faUsers, faCoins, faHistory,
     faBell, faSignOutAlt, faBars, faTimes, faEnvelope,
-    faHome, faChartBar, faFileInvoice, faFileAlt, faCog, faUserCircle
+    faHome, faChartBar, faFileInvoice, faFileAlt, faCog, faUserCircle, faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '../i18n';
 import { useEffect, useState as reactUseState } from 'react';
-import { notificationsApi } from '../api';
+import { notificationsApi, adminApi, paymentsApi } from '../api';
 
 interface SidebarProps {
     role: 'admin' | 'collector' | 'farmer';
@@ -22,19 +22,31 @@ export function Sidebar({ role, userName, onLogout, activeItem, onItemSelect }: 
     const { t, language, setLanguage } = useI18n();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [unreadCount, setUnreadCount] = reactUseState(0);
+    const [pendingCount, setPendingCount] = reactUseState(0);
+    const [pendingPayoutCount, setPendingPayoutCount] = reactUseState(0);
 
     useEffect(() => {
-        const fetchUnread = async () => {
+        const fetchCounts = async () => {
             try {
                 const notes = await notificationsApi.getNotifications();
                 const unread = notes.filter((n: any) => !n.read).length;
                 setUnreadCount(unread);
+
+                if (role === 'admin' || role === 'collector') {
+                    const pendingRole = role === 'admin' ? 'collector' : 'farmer';
+                    const [pendingUsers, payoutRequests] = await Promise.all([
+                        adminApi.getPendingUsers(pendingRole),
+                        paymentsApi.getPayoutRequests({ status: 'pending' })
+                    ]);
+                    setPendingCount(pendingUsers.length);
+                    setPendingPayoutCount(payoutRequests.length);
+                }
             } catch (error) {
-                console.error('Failed to fetch unread notes:', error);
+                console.error('Failed to fetch counts:', error);
             }
         };
-        fetchUnread();
-        const interval = setInterval(fetchUnread, 30000); // Check every 30s
+        fetchCounts();
+        const interval = setInterval(fetchCounts, 30000); // Check every 30s
         return () => clearInterval(interval);
     }, []);
 
@@ -52,6 +64,8 @@ export function Sidebar({ role, userName, onLogout, activeItem, onItemSelect }: 
         { id: 'records', label: t('sidebar.allRecords'), icon: faFileInvoice, roles: ['admin'] },
         { id: 'commission', label: t('sidebar.commission'), icon: faCoins, roles: ['admin'] },
         { id: 'reports', label: t('sidebar.reports'), icon: faFileAlt, roles: ['admin', 'collector', 'farmer'] },
+        { id: 'approvals', label: 'Approvals', icon: faUserPlus, roles: ['admin', 'collector'] },
+        { id: 'payouts', label: 'Payouts', icon: faCoins, roles: ['admin', 'collector'] },
         { id: 'settings-collector', label: t('sidebar.settings'), icon: faCog, roles: ['collector'] },
         { id: 'messages', label: 'Messages', icon: faEnvelope, roles: ['admin', 'collector', 'farmer'] },
     ];
@@ -122,6 +136,16 @@ export function Sidebar({ role, userName, onLogout, activeItem, onItemSelect }: 
                             {item.id === 'notifications' && unreadCount > 0 && (
                                 <span className="ml-auto bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-red-500/20 animate-pulse">
                                     {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
+                            )}
+                            {item.id === 'approvals' && pendingCount > 0 && (
+                                <span className="ml-auto bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-blue-500/20">
+                                    {pendingCount}
+                                </span>
+                            )}
+                            {item.id === 'payouts' && pendingPayoutCount > 0 && (
+                                <span className="ml-auto bg-purple-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-purple-500/20">
+                                    {pendingPayoutCount}
                                 </span>
                             )}
                         </button>

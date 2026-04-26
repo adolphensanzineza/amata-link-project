@@ -10,10 +10,12 @@ import { FarmerDashboard } from './components/FarmerDashboard';
 import { CollectorDashboard } from './components/CollectorDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
 import { RegistrationPending } from './components/RegistrationPending';
+import { ForgotPassword } from '@/app/components/ForgotPassword';
+import { ResetPassword } from '@/app/components/ResetPassword';
 import { I18nProvider } from './i18n';
 
 type UserRole = 'farmer' | 'collector' | 'admin' | null;
-type Page = 'home' | 'about' | 'contact' | 'signin' | 'signup' | 'get-started' | 'dashboard' | 'registration-pending';
+type Page = 'home' | 'about' | 'contact' | 'signin' | 'signup' | 'get-started' | 'forgot-password' | 'reset-password' | 'dashboard' | 'registration-pending';
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
@@ -96,13 +98,19 @@ function AppContent() {
         return <SignIn onNavigate={handleNavigate} onSignIn={handleSignIn} />;
       case 'signup':
         return <SignUp onNavigate={handleNavigate} onSignupSuccess={handleSignupSuccess} />;
-
+      case 'forgot-password':
+        return <ForgotPassword onNavigate={handleNavigate} />;
+      case 'reset-password':
+        return <ResetPassword onNavigate={handleNavigate} />;
+      case 'registration-pending':
+        return <RegistrationPending onNavigate={handleNavigate} />;
       case 'get-started':
         return <RoleSelection onRoleSelect={handleRoleSelect} onBack={() => handleNavigate('home')} />;
       case 'dashboard':
         if (!selectedRole) {
-          return <HomePage onNavigate={handleNavigate} />;
+          return <SignIn onNavigate={handleNavigate} onSignIn={handleSignIn} />;
         }
+
         switch (selectedRole) {
           case 'farmer':
             return <FarmerDashboard farmerName={userName} onLogout={handleLogout} />;

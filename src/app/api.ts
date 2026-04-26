@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5001/api';
 
 export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     const token = localStorage.getItem('amatalink_token');
@@ -64,6 +64,16 @@ export const authApi = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
+
+    forgotPassword: (data: { email: string }) => apiFetch('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+
+    resetPassword: (data: any) => apiFetch('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
 };
 
 export const milkApi = {
@@ -123,6 +133,9 @@ export const adminApi = {
         const query = new URLSearchParams(params as any).toString();
         return apiFetch(`/admin/export?${query}`);
     },
+    getPendingUsers: (role?: string) => apiFetch(`/admin/pending-users${role ? `?role=${role}` : ''}`),
+    approveUser: (id: number) => apiFetch(`/admin/users/${id}/approve`, { method: 'PUT' }),
+    rejectUser: (id: number) => apiFetch(`/admin/users/${id}/reject`, { method: 'PUT' }),
 };
 
 export const reportsApi = {
@@ -141,5 +154,15 @@ export const paymentsApi = {
     createMethod: (method: any) => apiFetch('/payments/methods', { method: 'POST', body: JSON.stringify(method) }),
     updateMethod: (id: number, method: any) => apiFetch(`/payments/methods/${id}`, { method: 'PUT', body: JSON.stringify(method) }),
     deleteMethod: (id: number) => apiFetch(`/payments/methods/${id}`, { method: 'DELETE' }),
-    setMyPayment: (payload: { payment_method_id?: number; account_number?: string }) => apiFetch('/payments/me', { method: 'POST', body: JSON.stringify(payload) })
+    setMyPayment: (payload: { payment_method_id?: number; account_number?: string }) => apiFetch('/payments/me', { method: 'POST', body: JSON.stringify(payload) }),
+    getFarmerMonthlySummary: () => apiFetch('/payments/farmer-monthly-summary'),
+    requestPayout: (payload: { amount: number; payment_method_id: number; account_number: string }) => apiFetch('/payments/request-payout', { method: 'POST', body: JSON.stringify(payload) }),
+    getPayoutRequests: (params?: { status?: string }) => {
+        const query = new URLSearchParams(params as any).toString();
+        return apiFetch(`/payments/requests${query ? `?${query}` : ''}`);
+    },
+    updatePayoutStatus: (id: number, status: string) => apiFetch(`/payments/requests/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+    })
 };

@@ -270,7 +270,7 @@ export default function CollectorAnalytics() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {records.slice(0, 12).map((record) => (
+                {records.map((record) => (
                   <tr key={record.id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="px-8 py-6 font-bold text-slate-900">
                       {new Date(record.collection_date).toLocaleDateString()}

@@ -69,6 +69,27 @@ async function run() {
       console.log('Column users.verification_expires already exists');
     }
 
+    // Add password reset columns
+    const [[{ cnt: rcCol }]] = await pool.query(
+      `SELECT COUNT(*) as cnt FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'reset_code'`
+    );
+    if (rcCol === 0) {
+      await pool.query("ALTER TABLE users ADD COLUMN reset_code VARCHAR(6) NULL;");
+      console.log('Added column users.reset_code');
+    } else {
+      console.log('Column users.reset_code already exists');
+    }
+
+    const [[{ cnt: reCol }]] = await pool.query(
+      `SELECT COUNT(*) as cnt FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'reset_expires'`
+    );
+    if (reCol === 0) {
+      await pool.query("ALTER TABLE users ADD COLUMN reset_expires TIMESTAMP NULL;");
+      console.log('Added column users.reset_expires');
+    } else {
+      console.log('Column users.reset_expires already exists');
+    }
+
     // Seed default payment methods
     const defaults = [
       { name: 'MTN Mobile Money', provider: 'MTN', code: 'MTN' },

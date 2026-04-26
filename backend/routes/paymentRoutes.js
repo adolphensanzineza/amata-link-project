@@ -1,5 +1,15 @@
 import express from 'express';
-import { listPaymentMethods, createPaymentMethod, updatePaymentMethod, deletePaymentMethod, setUserPayment } from '../controllers/paymentController.js';
+import { 
+    listPaymentMethods, 
+    createPaymentMethod, 
+    updatePaymentMethod, 
+    deletePaymentMethod, 
+    setUserPayment,
+    getFarmerMonthlySummary,
+    initiatePayoutRequest,
+    listPayoutRequests,
+    updatePayoutStatus
+} from '../controllers/paymentController.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -8,11 +18,19 @@ const router = express.Router();
 router.get('/methods', listPaymentMethods);
 
 // Admin: manage methods
-router.post('/methods', authenticateToken, requireRole('admin'), createPaymentMethod);
-router.put('/methods/:id', authenticateToken, requireRole('admin'), updatePaymentMethod);
-router.delete('/methods/:id', authenticateToken, requireRole('admin'), deletePaymentMethod);
+router.post('/methods', createPaymentMethod);
+router.put('/methods/:id', updatePaymentMethod);
+router.delete('/methods/:id', deletePaymentMethod);
 
 // User: set own payment preference
 router.post('/me', authenticateToken, setUserPayment);
+
+// Farmer: Monthly Payouts
+router.get('/farmer-monthly-summary', authenticateToken, requireRole('farmer'), getFarmerMonthlySummary);
+router.post('/request-payout', authenticateToken, requireRole('farmer'), initiatePayoutRequest);
+
+// Management: Payout Requests
+router.get('/requests', authenticateToken, requireRole('admin', 'collector'), listPayoutRequests);
+router.put('/requests/:id/status', authenticateToken, requireRole('admin', 'collector'), updatePayoutStatus);
 
 export default router;

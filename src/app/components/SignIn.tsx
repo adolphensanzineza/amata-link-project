@@ -35,7 +35,12 @@ export function SignIn({ onNavigate, onSignIn }: SignInProps) {
       toast.success('Login successful.');
       onSignIn(response.user.role);
     } catch (error: any) {
-      toast.error(error.message || 'Sign in failed. Verifiye email yawe mbere.');
+      if (error.message && error.message.includes('pending')) {
+        toast.info('Your registration is still pending approval.');
+        setTimeout(() => onNavigate('registration-pending'), 1000);
+      } else {
+        toast.error(error.message || 'Sign in failed.');
+      }
     }
   };
 
@@ -131,7 +136,8 @@ export function SignIn({ onNavigate, onSignIn }: SignInProps) {
                 </label>
                 <button
                   type="button"
-                  className="text-sm text-green-600 hover:text-green-700"
+                  onClick={() => onNavigate('forgot-password')}
+                  className="text-sm text-green-600 hover:text-green-700 cursor-pointer"
                 >
                   Forgot password?
                 </button>
@@ -140,7 +146,7 @@ export function SignIn({ onNavigate, onSignIn }: SignInProps) {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 cursor-pointer"
               >
                 <FontAwesomeIcon icon={faSignInAlt} />
                 Sign In
@@ -153,7 +159,7 @@ export function SignIn({ onNavigate, onSignIn }: SignInProps) {
                 Don't have an account?{' '}
                 <button
                   onClick={() => onNavigate('signup')}
-                  className="text-green-600 hover:text-green-700 flex items-center justify-center gap-2 mx-auto mt-2"
+                  className="text-green-600 hover:text-green-700 flex items-center justify-center gap-2 mx-auto mt-2 cursor-pointer"
                 >
                   <FontAwesomeIcon icon={faUserPlus} />
                   Create an account

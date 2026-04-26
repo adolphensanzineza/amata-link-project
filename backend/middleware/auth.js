@@ -11,8 +11,9 @@ export const authenticateToken = (req, res, next) => {
     token = req.query.token;
   }
 
+  // If no token, return unauthorized
   if (!token) {
-    return res.status(401).json({ message: 'Ikibazo: Token ntibihari' });
+    return res.status(401).json({ message: 'Authentication required' });
   }
 
   try {
@@ -20,14 +21,14 @@ export const authenticateToken = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(403).json({ message: 'Token ntikora neza' }); // Token is invalid
+    return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
 
 export const requireRole = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Ntaburenganziro buno bwoko busanzwe' }); // Permission denied for this role
+      return res.status(403).json({ message: 'Forbidden: Insufficient permissions' });
     }
     next();
   };

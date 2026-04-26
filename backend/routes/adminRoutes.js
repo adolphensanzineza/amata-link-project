@@ -18,7 +18,10 @@ import {
   updateSettings,
   getPaginatedMilkRecords,
   removeDuplicates,
-  exportData
+  exportData,
+  getPendingUsers,
+  approveUser,
+  rejectUser
 } from '../controllers/adminController.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
@@ -29,31 +32,17 @@ router.use(authenticateToken);
 
 // Settings routes - allow both admin and collector to get/update settings
 router.get('/settings', getSettings);
-router.put('/settings', (req, res, next) => {
-  if (req.user.role === 'admin' || req.user.role === 'collector') {
-    next();
-  } else {
-    res.status(403).json({ message: 'Access denied' });
-  }
-}, updateSettings);
+router.put('/settings', updateSettings);
 
-// Update user (allowed for admin and collector with controller-level checks)
-router.put('/users/:id', (req, res, next) => {
-  if (req.user.role === 'admin' || req.user.role === 'collector') {
-    next();
-  } else {
-    res.status(403).json({ message: 'Access denied' });
-  }
-}, updateUser);
+// Routes allowed for both admin and collector (with internal checks)
+router.put('/users/:id', updateUser);
+router.delete('/users/:id', deleteUser);
+router.post('/users', createUser);
 
-// Delete user (allowed for admin and collector with controller-level checks)
-router.delete('/users/:id', (req, res, next) => {
-  if (req.user.role === 'admin' || req.user.role === 'collector') {
-    next();
-  } else {
-    res.status(403).json({ message: 'Access denied' });
-  }
-}, deleteUser);
+// Registration Approval routes
+router.get('/pending-users', getPendingUsers);
+router.put('/users/:id/approve', approveUser);
+router.put('/users/:id/reject', rejectUser);
 
 // All other routes require admin role
 router.use(requireRole('admin'));
@@ -93,9 +82,6 @@ router.post('/reports/custom', getCustomDateRangeReport);
 
 // Get all users
 router.get('/users', getAllUsers);
-
-// Create new user (admin only)
-router.post('/users', createUser);
 
 // Remove duplicates
 router.post('/remove-duplicates', removeDuplicates);

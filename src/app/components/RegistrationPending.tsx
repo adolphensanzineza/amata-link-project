@@ -46,7 +46,7 @@ export function RegistrationPending({ onNavigate }: RegistrationPendingProps) {
                             </div>
                             <div>
                                 <h4 className="text-white font-bold text-sm">Review in Progress</h4>
-                                <p className="text-slate-500 text-xs mt-1">Our team typically verifies new farmer accounts within 24 hours.</p>
+                                <p className="text-slate-500 text-xs mt-1">Our team typically verifies new accounts within 24 hours. Check your email for a confirmation receipt.</p>
                             </div>
                         </div>
 
@@ -55,8 +55,8 @@ export function RegistrationPending({ onNavigate }: RegistrationPendingProps) {
                                 <FontAwesomeIcon icon={faCheckCircle} />
                             </div>
                             <div>
-                                <h4 className="text-white font-bold text-sm">Activation SMS</h4>
-                                <p className="text-slate-500 text-xs mt-1">You will receive an activation code on your registered phone number once approved.</p>
+                                <h4 className="text-white font-bold text-sm">Activation Email</h4>
+                                <p className="text-slate-500 text-xs mt-1">You will receive an activation email on your registered address once approved by an Admin or Collector.</p>
                             </div>
                         </div>
                     </div>

@@ -4,17 +4,16 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// All routes require authentication
-router.use(authenticateToken);
+// Public routes (previously authenticated)
 
 // Get user notifications
-router.get('/', getNotifications);
+router.get('/', authenticateToken, getNotifications);
 
 // Get unread count
-router.get('/unread-count', getUnreadCount);
+router.get('/unread-count', authenticateToken, getUnreadCount);
 
 // Mark notification as read
-router.put('/:notificationId/read', markAsRead);
+router.put('/:notificationId/read', authenticateToken, markAsRead);
 
 // Route to send daily milk summary emails
 router.post('/send-daily-summary', async (req, res) => {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignInAlt, faUserPlus, faBars, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { Milk, Info, Phone, Home } from 'lucide-react';
+import { faSignInAlt, faUserPlus, faBars, faXmark, faHome, faInfoCircle, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import { Milk } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface NavigationProps {
@@ -25,10 +25,10 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
   }, []);
 
   const navLinks = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'about', label: 'About Us', icon: Info },
-    { id: 'contact', label: 'Contact', icon: Phone },
-    { id: 'signup', label: 'Sign Up', icon: faUserPlus },
+    { id: 'home', label: 'Home', faIcon: faHome },
+    { id: 'about', label: 'About Us', faIcon: faInfoCircle },
+    { id: 'contact', label: 'Contact', faIcon: faEnvelope },
+    { id: 'signup', label: 'Sign Up', faIcon: faUserPlus },
   ];
 
   return (
@@ -63,13 +63,14 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
                 <button
                   key={link.id}
                   onClick={() => onNavigate(link.id)}
-                  className={`text-sm font-bold transition-all px-5 py-2.5 rounded-xl border ${currentPage === link.id
+                  className={`flex items-center gap-2 text-sm font-bold transition-all px-5 py-2.5 rounded-xl border cursor-pointer ${currentPage === link.id
                       ? (link.id === 'signup'
                         ? 'bg-green-600 text-white border-green-600 shadow-lg shadow-green-900/20'
                         : 'bg-green-50 text-green-600 border-green-100 shadow-sm')
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-transparent hover:border-slate-100'
                     }`}
                 >
+                  <FontAwesomeIcon icon={link.faIcon} className="text-xs" />
                   {link.label}
                 </button>
               ))}
@@ -79,7 +80,7 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
 
             <button
               onClick={() => onNavigate('signin')}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all border ${currentPage === 'signin'
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all border cursor-pointer ${currentPage === 'signin'
                   ? 'bg-green-600 text-white border-green-600 shadow-lg shadow-green-900/20'
                   : 'text-slate-600 border-slate-200 hover:bg-slate-50'
                 }`}
@@ -92,7 +93,7 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
           {/* Mobile Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden w-11 h-11 rounded-xl flex items-center justify-center transition-all bg-slate-100 text-slate-600"
+            className="lg:hidden w-11 h-11 rounded-xl flex items-center justify-center transition-all bg-slate-100 text-slate-600 cursor-pointer"
           >
             <FontAwesomeIcon icon={mobileMenuOpen ? faXmark : faBars} className="text-lg" />
           </button>
@@ -110,18 +111,14 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
           >
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-1 gap-2">
-                {[...navLinks, { id: 'signin', label: 'Sign In', icon: faSignInAlt }].map((link) => (
+                {[...navLinks, { id: 'signin', label: 'Sign In', faIcon: faSignInAlt }].map((link) => (
                   <button
                     key={link.id}
                     onClick={() => { onNavigate(link.id); setMobileMenuOpen(false); }}
-                    className={`flex items-center gap-4 px-6 py-4 rounded-xl text-left font-bold transition-all ${currentPage === link.id ? 'bg-green-600 text-white shadow-lg shadow-green-900/10' : 'text-slate-600 hover:bg-slate-50'
+                    className={`flex items-center gap-4 px-6 py-4 rounded-xl text-left font-bold transition-all cursor-pointer ${currentPage === link.id ? 'bg-green-600 text-white shadow-lg shadow-green-900/10' : 'text-slate-600 hover:bg-slate-50'
                       }`}
                   >
-                    {typeof link.icon === 'object' ? (
-                      <FontAwesomeIcon icon={link.icon} className={`w-5 h-5 ${currentPage === link.id ? 'text-white' : 'opacity-50'}`} />
-                    ) : (
-                      <Home className={`w-5 h-5 ${currentPage === link.id ? 'text-white' : 'opacity-50'}`} />
-                    )}
+                    <FontAwesomeIcon icon={link.faIcon} className={`w-5 h-5 ${currentPage === link.id ? 'text-white' : 'opacity-50'}`} />
                     {link.label}
                   </button>
                 ))}

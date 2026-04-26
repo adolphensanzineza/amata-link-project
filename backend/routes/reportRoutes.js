@@ -4,11 +4,10 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// All reporting routes require authentication
-router.use(authenticateToken);
+// Public reporting routes
 
 // Export routes
-router.get('/export/pdf', exportPDF);
-router.get('/export/excel', exportExcel);
+router.get('/export/pdf', authenticateToken, exportPDF);
+router.get('/export/excel', authenticateToken, exportExcel);
 
 export default router;

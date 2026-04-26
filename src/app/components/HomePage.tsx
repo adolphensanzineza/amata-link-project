@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Milk, TrendingUp, Bell, BarChart3, CheckCircle, Shield, ArrowRight, Users, Smartphone } from 'lucide-react';
+import { Milk, TrendingUp, Bell, BarChart3, CheckCircle, Shield, ArrowRight, Users, Smartphone, Home, Info, Mail, UserPlus } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -76,14 +76,14 @@ export function HomePage({ onNavigate }: HomePageProps) {
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={() => onNavigate('signin')}
-                  className="px-8 py-4 bg-white text-green-600 rounded-2xl font-bold hover:bg-green-50 transition-all shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)] flex items-center gap-2 active:scale-95"
+                  className="px-8 py-4 bg-white text-green-600 rounded-2xl font-bold hover:bg-green-50 transition-all shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)] flex items-center gap-2 active:scale-95 cursor-pointer"
                 >
                   Get Started
                   <ArrowRight className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => onNavigate('about')}
-                  className="px-8 py-4 bg-transparent text-white font-bold rounded-2xl hover:bg-white/10 transition-all border-2 border-white/30 active:scale-95"
+                  className="px-8 py-4 bg-transparent text-white font-bold rounded-2xl hover:bg-white/10 transition-all border-2 border-white/30 active:scale-95 cursor-pointer"
                 >
                   Learn More
                 </button>
@@ -105,9 +105,9 @@ export function HomePage({ onNavigate }: HomePageProps) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
               </div>
 
-              {/* Floating Badge */}
+              {/* Floating Badge 1 - Bottom Left */}
               <div
-                className="absolute -bottom-6 -left-6 bg-white p-6 rounded-3xl shadow-2xl border border-slate-100 hidden md:block"
+                className="absolute -bottom-10 -left-6 bg-white p-6 rounded-3xl shadow-2xl border border-slate-100 hidden md:block z-20"
                 style={bounceSlow}
               >
                 <div className="flex items-center gap-4">
@@ -118,6 +118,35 @@ export function HomePage({ onNavigate }: HomePageProps) {
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Total Impact</p>
                     <p className="text-xl font-black text-slate-900 leading-none">50k+ Liters</p>
                   </div>
+                </div>
+              </div>
+
+              {/* Floating Badge 2 - Top Right */}
+              <div
+                className="absolute -top-10 -right-6 bg-white p-6 rounded-3xl shadow-2xl border border-slate-100 hidden md:block z-20"
+                style={{ ...bounceSlow, animationDelay: '1.5s' }}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
+                    <Shield className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Secure</p>
+                    <p className="text-xl font-black text-slate-900 leading-none">Verified</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating Badge 3 - Middle Right */}
+              <div
+                className="absolute top-1/2 -right-12 translate-y-1/2 bg-white p-5 rounded-3xl shadow-2xl border border-slate-100 hidden lg:block z-20"
+                style={{ ...bounceSlow, animationDelay: '0.7s' }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Premium Quality</span>
                 </div>
               </div>
             </motion.div>
@@ -132,7 +161,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
       {/* Stats Section */}
       <div className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             {stats.map((stat, index) => (
               <motion.div
                 key={index}
@@ -142,12 +171,35 @@ export function HomePage({ onNavigate }: HomePageProps) {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="text-center"
               >
-                <div className="text-4xl lg:text-5xl text-green-600 mb-2">
+                <div className="text-4xl lg:text-5xl text-green-600 mb-2 font-black">
                   {stat.value}
                 </div>
-                <div className="text-gray-600">{stat.label}</div>
+                <div className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{stat.label}</div>
               </motion.div>
             ))}
+          </div>
+
+          {/* Trusted Partners / Icons row */}
+          <div className="pt-12 border-t border-gray-200">
+            <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-10">Supporting Innovation In Dairy Supply Chain</p>
+            <div className="flex flex-wrap justify-center items-center gap-12 lg:gap-20 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
+              <div className="flex items-center gap-2 group">
+                <Shield className="w-8 h-8 text-slate-600 group-hover:text-blue-600" />
+                <span className="text-lg font-black text-slate-800 tracking-tighter">SafeMilk</span>
+              </div>
+              <div className="flex items-center gap-2 group">
+                <Users className="w-8 h-8 text-slate-600 group-hover:text-green-600" />
+                <span className="text-lg font-black text-slate-800 tracking-tighter">AgriGrow</span>
+              </div>
+              <div className="flex items-center gap-2 group">
+                <CheckCircle className="w-8 h-8 text-slate-600 group-hover:text-emerald-600" />
+                <span className="text-lg font-black text-slate-800 tracking-tighter">PureQuality</span>
+              </div>
+              <div className="flex items-center gap-2 group">
+                <BarChart3 className="w-8 h-8 text-slate-600 group-hover:text-purple-600" />
+                <span className="text-lg font-black text-slate-800 tracking-tighter">DataDairy</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -310,7 +362,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
             </p>
             <button
               onClick={() => onNavigate('signin')}
-              className="px-10 py-4 bg-white text-green-600 rounded-lg hover:bg-green-50 transition-all shadow-lg hover:shadow-xl text-lg flex items-center gap-2 mx-auto"
+              className="px-10 py-4 bg-white text-green-600 rounded-lg hover:bg-green-50 transition-all shadow-lg hover:shadow-xl text-lg flex items-center gap-2 mx-auto cursor-pointer"
             >
               Get Started Today
               <ArrowRight className="w-5 h-5" />
@@ -336,12 +388,36 @@ export function HomePage({ onNavigate }: HomePageProps) {
             </div>
             <div>
               <h4 className="text-white mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                <button
+                  onClick={() => onNavigate('home')}
+                  className="group flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all hover:scale-105 hover:border-white/40"
+                >
+                  <Home className="w-8 h-8 text-green-400 mb-2 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-white group-hover:text-green-200">Home</span>
+                </button>
+                <button
+                  onClick={() => onNavigate('about')}
+                  className="group flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all hover:scale-105 hover:border-white/40"
+                >
+                  <Info className="w-8 h-8 text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-white group-hover:text-blue-200">About Us</span>
+                </button>
+                <button
+                  onClick={() => onNavigate('contact')}
+                  className="group flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all hover:scale-105 hover:border-white/40"
+                >
+                  <Mail className="w-8 h-8 text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-white group-hover:text-emerald-200">Contact</span>
+                </button>
+                <button
+                  onClick={() => onNavigate('signup')}
+                  className="group flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all hover:scale-105 hover:border-white/40"
+                >
+                  <UserPlus className="w-8 h-8 text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-white group-hover:text-purple-200">Sign Up</span>
+                </button>
+              </div>
             </div>
             <div>
               <h4 className="text-white mb-4">Contact</h4>

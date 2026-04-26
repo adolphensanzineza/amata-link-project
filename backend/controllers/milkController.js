@@ -1,10 +1,14 @@
 import pool from '../config/database.js';
-import { sendDailyMilkSummary, sendAdminMilkAlert, sendSMS } from './notificationController.js';
+import { sendDailyMilkSummary, sendAdminMilkAlert, sendSMS, sendProductionFeedbackSMS } from './notificationController.js';
+import { sendMilkProductionFeedbackEmail } from './emailUtils.js';
 
 // Add milk record (Village Collector records milk from farmer)
 // If a record already exists for the same farmer + collector on the same date,
 // the liters are ADDED to the existing record (no duplicates).
 export const addMilkRecord = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
   try {
     const { farmerId, liters, ratePerLiter = 500 } = req.body;
     const collectorId = req.user.id;
@@ -79,6 +83,7 @@ export const addMilkRecord = async (req, res) => {
     // Create notification for farmer
     const [farmerUser] = await pool.execute('SELECT full_name FROM users WHERE id = ?', [farmerId]);
     if (farmerUser.length > 0) {
+      const farmerName = farmerUser[0].full_name;
       await pool.execute(
         'INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)',
         [
@@ -86,6 +91,51 @@ export const addMilkRecord = async (req, res) => {
           'Milk Collected',
           `${addedLiters}L recorded. Amount: ${addedAmount} RWF`,
           'daily'
+        ]
+      );
+
+      // --- PRODUCTION FEEDBACK LOGIC ---
+      let feedbackLevel = 'high';
+      let feedbackSubjectKinya = 'Umusaruro ushimishije';
+      let feedbackMessageKinya = `Umusaruro wanyu (${addedLiters}L) uri mu rwego rwo hejuru. Kobomeza kwita ku matungo neza.`;
+      let feedbackMessageEng = `Your production (${addedLiters}L) is high and stable. Maintain good livestock care.`;
+
+      if (addedLiters < 10) {
+        feedbackLevel = 'urgent';
+        feedbackSubjectKinya = 'Ubutumwa bwihutirwa';
+        feedbackMessageKinya = `Umusaruro wanyu (${addedLiters}L) wagabanutse cyane. Shaka umuvuzi w'amatungo (Vet) vuba.`;
+        feedbackMessageEng = `Production (${addedLiters}L) is extremely low. Seek professional veterinary assistance immediately.`;
+      } else if (addedLiters < 30) {
+        feedbackLevel = 'concern';
+        feedbackSubjectKinya = 'Inama ku musaruro uri hasi';
+        feedbackMessageKinya = `Umusaruro (${addedLiters}L) uri hasi ugereranyije n'ibisanzwe. Reba niba imirire ari myiza.`;
+        feedbackMessageEng = `Production (${addedLiters}L) is below normal. Check for poor nutrition or other issues.`;
+      } else if (addedLiters < 50) {
+        feedbackLevel = 'warning';
+        feedbackSubjectKinya = 'Isubira inyuma ry\'umusaruro';
+        feedbackMessageKinya = `Umusaruro (${addedLiters}L) wagabanutseho gato. Genzura imirire n'ubuzima bw'amatungo.`;
+        feedbackMessageEng = `Slight decrease in production (${addedLiters}L). Monitor feed quality and health.`;
+      }
+
+      // Add feedback notification for farmer
+      await pool.execute(
+        'INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)',
+        [
+          farmerId,
+          feedbackSubjectKinya,
+          `${feedbackMessageKinya} / ${feedbackMessageEng}`,
+          feedbackLevel
+        ]
+      );
+
+      // ALSO create standard collection notification for the collector
+      await pool.execute(
+        'INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)',
+        [
+          req.user.id,
+          'Record Added',
+          `You recorded ${addedLiters}L for ${farmerName}.`,
+          'system'
         ]
       );
     }
@@ -114,6 +164,19 @@ export const addMilkRecord = async (req, res) => {
                 addedAmount,
                 displayDate,
                 displayTime
+            ),
+            sendMilkProductionFeedbackEmail(
+                farmerData[0].email,
+                farmerData[0].full_name,
+                addedLiters,
+                // We need to re-calculate level or use a variable
+                addedLiters < 10 ? 'urgent' : addedLiters < 30 ? 'concern' : addedLiters < 50 ? 'warning' : 'high'
+            ),
+            sendProductionFeedbackSMS(
+                farmerData[0].phone,
+                farmerData[0].full_name,
+                addedLiters,
+                addedLiters < 10 ? 'urgent' : addedLiters < 30 ? 'concern' : addedLiters < 50 ? 'warning' : 'high'
             )
         ]);
     }
@@ -154,6 +217,9 @@ export const addMilkRecord = async (req, res) => {
 
 // Get milk records for collector
 export const getCollectorRecords = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
   try {
     const collectorId = req.user.id;
 
@@ -187,6 +253,9 @@ export const getCollectorRecords = async (req, res) => {
 
 // Get farmer's milk records
 export const getFarmerRecords = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
   try {
     const farmerId = req.user.id;
 
@@ -220,6 +289,9 @@ export const getFarmerRecords = async (req, res) => {
 
 // Get today's summary for collector
 export const getCollectorTodaySummary = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
   try {
     const collectorId = req.user.id;
 
@@ -253,17 +325,37 @@ export const getCollectorTodaySummary = async (req, res) => {
 
 // Get farmers list for collectors (limited info)
 export const getFarmersForCollector = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
   try {
+    const collectorId = req.user.id;
+    const [collectorRows] = await pool.execute(
+      'SELECT id FROM collectors WHERE user_id = ?',
+      [collectorId]
+    );
+    
+    if (collectorRows.length === 0) {
+      return res.status(403).json({ message: 'Collector not found' });
+    }
+    
+    const collectorDbId = collectorRows[0].id;
+    
+    // Filter farmers by collector_id (ownership)
     const [farmers] = await pool.execute(
-      `SELECT f.id as farmer_id, u.id as user_id, u.full_name, u.phone, u.village, u.sector, f.total_liters_delivered, f.total_earnings, u.created_at
+      `SELECT f.id as farmer_id, u.id as user_id, u.full_name, u.phone, u.village, u.sector, 
+              f.total_liters_delivered, f.total_earnings, u.created_at
        FROM farmers f
        JOIN users u ON f.user_id = u.id
-       ORDER BY u.created_at DESC`
+       WHERE f.collector_id = ?
+       ORDER BY u.created_at DESC`,
+      [collectorDbId]
     );
+    
     res.json(farmers);
   } catch (error) {
-    console.error('Get farmers for collector error:', error);
-    res.status(500).json({ message: 'Ibyago mu byakozwe' });
+    console.error('Get assigned farmers error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 

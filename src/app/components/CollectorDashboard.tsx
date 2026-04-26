@@ -12,13 +12,16 @@ import { safeSum, safeNumber, safeMultiply, safeRound, formatCurrency, formatLit
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Sidebar } from './Sidebar';
 import { MilkEntryForm } from './MilkEntryForm';
+import { FarmerEntryForm } from './FarmerEntryForm';
 import { milkApi, notificationsApi, adminApi, authApi } from '../api';
 import MyDeliveriesView from './collector/MyDeliveriesView';
 import CollectorAnalytics from './collector/CollectorAnalytics';
 import CollectorNotifications from './collector/CollectorNotifications';
 import CollectorSettings from './collector/CollectorSettings';
+import PayoutsView from './collector/PayoutsView';
 import MessagesView from './MessagesView';
 import ReportView from './reports/ReportView';
+import ApprovalsView from './ApprovalsView';
 import { toast } from 'sonner';
 import { useI18n } from '../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -103,15 +106,23 @@ function TableSection({ title, searchPlaceholder, searchTerm, onSearch, headers,
           <p className="text-xs text-slate-400 font-medium mt-1">Manage your assigned farmers and record milk collections</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="relative w-full sm:w-72 flex-shrink-0">
-            <FontAwesomeIcon icon={faSearch} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+          <div className="relative w-full sm:w-80 flex-shrink-0 group">
+            <FontAwesomeIcon icon={faSearch} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-blue-500 transition-colors" />
             <input
               type="text"
               placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={(e) => onSearch(e.target.value)}
-              className="w-full pl-12 pr-6 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all shadow-sm"
+              className="w-full pl-12 pr-12 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-sm font-medium"
             />
+            {searchTerm && (
+              <button 
+                onClick={() => onSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-slate-100 text-slate-400 hover:text-slate-900 rounded-xl transition-all"
+              >
+                <FontAwesomeIcon icon={faTimesCircle} className="text-xs" />
+              </button>
+            )}
           </div>
           {action}
         </div>
@@ -136,10 +147,21 @@ function TableSection({ title, searchPlaceholder, searchTerm, onSearch, headers,
               <tr>
                 <td colSpan={headers.length} className="px-8 py-20 text-center">
                   <div className="flex flex-col items-center gap-4">
-                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-200">
-                      <FontAwesomeIcon icon={faUsers} className="text-4xl" />
+                    <div className="w-24 h-24 bg-gradient-to-br from-slate-50 to-white rounded-full flex items-center justify-center text-slate-200 shadow-inner mb-6">
+                      <FontAwesomeIcon icon={faUsers} className="text-5xl" />
                     </div>
-                    <p className="text-slate-400 font-medium italic">No farmers found matching your search</p>
+                    <p className="text-slate-900 font-black text-xl tracking-tight mb-2">No farmers found</p>
+                    <p className="text-slate-400 font-medium max-w-[280px] mb-8">
+                      {searchTerm ? 'Try adjusting your search or clearing the filters' : 'Start growing your network by adding your first farmer today'}
+                    </p>
+                    {searchTerm && (
+                      <button 
+                        onClick={() => onSearch('')}
+                        className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-xl shadow-slate-900/10"
+                      >
+                        Clear All Filters
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -185,6 +207,7 @@ export function CollectorDashboard({ collectorName, onLogout }: CollectorDashboa
   const [activeItem, setActiveItem] = useState('overview');
   const [farmers, setFarmers] = useState<User[]>([]);
   const [summary, setSummary] = useState<any>({ total_records: 0, total_liters: 0, total_amount: 0 });
+  const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEntryForm, setShowEntryForm] = useState(false);
   const [isAddFarmerModalOpen, setIsAddFarmerModalOpen] = useState(false);
@@ -229,14 +252,16 @@ export function CollectorDashboard({ collectorName, onLogout }: CollectorDashboa
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [farmersData, summaryData, notificationsData] = await Promise.all([
+      const [farmersData, summaryData, notificationsData, recordsData] = await Promise.all([
         milkApi.getFarmers(),
         milkApi.getTodaySummary(),
-        notificationsApi.getNotifications()
+        notificationsApi.getNotifications(),
+        milkApi.getCollectorRecords()
       ]);
       setFarmers(farmersData || []);
       setSummary(summaryData || { total_records: 0, total_liters: 0, total_amount: 0 });
       setNotifications(notificationsData || []);
+      setRecords(recordsData || []);
     } catch (error: any) {
       toast.error(t('errors.fetchFailed') + ': ' + error.message);
     } finally {
@@ -248,22 +273,29 @@ export function CollectorDashboard({ collectorName, onLogout }: CollectorDashboa
     fetchData();
   }, [fetchData]);
 
-  // Chart data
+  // Chart data from actual historical records
   const dailyChartData = useMemo(() => {
-    const days: Record<string, { liters: number; amount: number }> = {};
-    // Simulate from summary or fetch more data
+    if (records.length > 0) {
+      const days: Record<string, { liters: number; amount: number }> = {};
+      records.forEach((r: any) => {
+        const d = new Date(r.collection_date).toLocaleDateString('en-RW', { day: 'numeric', month: 'short' });
+        if (!days[d]) days[d] = { liters: 0, amount: 0 };
+        days[d].liters += safeNumber(r.liters);
+        days[d].amount += safeNumber(r.total_amount);
+      });
+      return Object.entries(days).slice(-14).reverse().map(([name, v]) => ({ name, liters: v.liters, amount: v.amount }));
+    }
+    // Fallback to today's summary only
     const today = new Date().toLocaleDateString('en-RW', { weekday: 'short' });
-    days[today] = { liters: safeNumber(summary.total_liters), amount: safeNumber(summary.total_amount) };
-    return Object.entries(days).map(([name, v]) => ({ name, liters: v.liters, amount: v.amount }));
-
-  }, [summary]);
+    return [{ name: today, liters: safeNumber(summary.total_liters), amount: safeNumber(summary.total_amount) }];
+  }, [records, summary]);
 
   const villageStats = useMemo(() => {
     const villages = Array.from(new Set(farmers.map(f => f.village || 'Other')));
     return villages.map(village => ({
       name: village,
       value: farmers.filter(f => f.village === village).length
-    })).slice(0, 5);
+    }));
   }, [farmers]);
 
   const handleRecordMilk = (farmer: User) => {
@@ -294,15 +326,17 @@ export function CollectorDashboard({ collectorName, onLogout }: CollectorDashboa
     }
   };
 
-  const handleAddFarmer = async () => {
+  const handleAddFarmer = async (formData: any) => {
     try {
-      await authApi.register(farmerForm);
+      setLoading(true);
+      await adminApi.createUser(formData);
       toast.success('Farmer added successfully');
       setIsAddFarmerModalOpen(false);
-      setFarmerForm({ fullName: '', email: '', phone: '', password: '', village: '', sector: '', role: 'farmer' });
       fetchData();
     } catch (error: any) {
       toast.error('Failed to add farmer: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -327,6 +361,8 @@ export function CollectorDashboard({ collectorName, onLogout }: CollectorDashboa
         {activeItem === 'messages' && <MessagesView />}
         {activeItem === 'reports' && <ReportView />}
         {activeItem === 'settings-collector' && <CollectorSettings />}
+        {activeItem === 'approvals' && <ApprovalsView roleToApprove="farmer" />}
+        {activeItem === 'payouts' && <PayoutsView />}
       </div>
     );
   };
@@ -437,10 +473,10 @@ export function CollectorDashboard({ collectorName, onLogout }: CollectorDashboa
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="grid grid-cols-2 gap-3 mt-auto">
-                {villageStats.slice(0, 4).map((v, i) => (
+              <div className="grid grid-cols-2 gap-3 mt-auto max-h-36 overflow-y-auto custom-scrollbar">
+                {villageStats.map((v, i) => (
                   <div key={i} className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-100/50">
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ['#9333ea', '#3b82f6', '#10b981', '#f59e0b'][i % 4] }} />
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ['#9333ea', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'][i % 5] }} />
                     <span className="text-[10px] font-black text-slate-600 truncate uppercase tracking-widest">{v.name}</span>
                   </div>
                 ))}
@@ -597,85 +633,12 @@ export function CollectorDashboard({ collectorName, onLogout }: CollectorDashboa
         />
       )}
 
-      {/* Add Farmer Modal - Simplified version */}
       {isAddFarmerModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9, y: 20 }} 
-            animate={{ opacity: 1, scale: 1, y: 0 }} 
-            className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto"
-          >
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-black text-slate-900">Add New Farmer</h3>
-              <button onClick={() => setIsAddFarmerModalOpen(false)} className="text-slate-400 hover:text-slate-900">
-                <FontAwesomeIcon icon={faTimesCircle} />
-              </button>
-            </div>
-            <div className="space-y-6">
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Full Name *</label>
-                <input 
-                  type="text" 
-                  value={farmerForm.fullName}
-                  onChange={(e) => setFarmerForm({...farmerForm, fullName: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Phone *</label>
-                  <input 
-                    type="tel" 
-                    value={farmerForm.phone}
-                    onChange={(e) => setFarmerForm({...farmerForm, phone: e.target.value})}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email *</label>
-                  <input 
-                    type="email" 
-                    value={farmerForm.email}
-                    onChange={(e) => setFarmerForm({...farmerForm, email: e.target.value})}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Village</label>
-                <input 
-                  type="text" 
-                  value={farmerForm.village}
-                  onChange={(e) => setFarmerForm({...farmerForm, village: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Password *</label>
-                <input 
-                  type="password" 
-                  value={farmerForm.password}
-                  onChange={(e) => setFarmerForm({...farmerForm, password: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
-                />
-              </div>
-              <div className="flex gap-4 pt-6">
-                <button 
-                  onClick={() => setIsAddFarmerModalOpen(false)}
-                  className="flex-1 px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleAddFarmer}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                >
-                  Add Farmer
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+        <FarmerEntryForm 
+          onClose={() => setIsAddFarmerModalOpen(false)}
+          onSubmit={handleAddFarmer}
+          loading={loading}
+        />
       )}
     </div>
   );

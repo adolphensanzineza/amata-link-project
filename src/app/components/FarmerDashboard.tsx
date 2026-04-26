@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { faChartLine, faCalendarAlt, faCoins, faBell, faCheckCircle, faClock, faExclamationCircle, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine, faCalendarAlt, faCoins, faBell, faCheckCircle, faClock, faExclamationCircle, faChevronLeft, faChevronRight, faExclamationTriangle, faInfoCircle, faWallet, faMoneyCheckAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { safeSum, safeNumber, formatCurrency, formatLiters } from '../utils/math';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Sidebar } from './Sidebar';
 import { Milk } from 'lucide-react';
-import { milkApi, notificationsApi } from '../api';
+import { milkApi, notificationsApi, paymentsApi, authApi } from '../api';
 import { toast } from 'sonner';
 import { useI18n } from '../i18n';
 import FarmerDeliveriesView from './farmer/FarmerDeliveriesView';
@@ -26,6 +26,11 @@ export function FarmerDashboard({ farmerName, onLogout }: FarmerDashboardProps) 
   const [milkRecords, setMilkRecords] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [monthlySummary, setMonthlySummary] = useState<any>(null);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [submittingPayment, setSubmittingPayment] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   // Pagination state for delivery history table
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,12 +39,18 @@ export function FarmerDashboard({ farmerName, onLogout }: FarmerDashboardProps) 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [records, notes] = await Promise.all([
+        const [records, notes, summary, methods, profile] = await Promise.all([
           milkApi.getFarmerRecords(),
-          notificationsApi.getNotifications()
+          notificationsApi.getNotifications(),
+          paymentsApi.getFarmerMonthlySummary(),
+          paymentsApi.getMethods(),
+          authApi.getMe()
         ]);
         setMilkRecords(records);
         setNotifications(notes);
+        setMonthlySummary(summary);
+        setPaymentMethods(methods);
+        setUserProfile(profile);
       } catch (error: any) {
         toast.error(t('errors.fetchFailed') + ': ' + error.message);
       } finally {
@@ -48,6 +59,30 @@ export function FarmerDashboard({ farmerName, onLogout }: FarmerDashboardProps) 
     };
     fetchData();
   }, [t]);
+
+  const handlePayoutRequest = async (methodId: number, accountNumber: string) => {
+    if (!monthlySummary || monthlySummary.total_amount <= 0) {
+      toast.error('Ntabwo mushobora gusaba kwishyurwa kuko nta mafaranga mufite kuri uyu kwezi.');
+      return;
+    }
+    setSubmittingPayment(true);
+    try {
+      await paymentsApi.requestPayout({
+        amount: monthlySummary.total_amount,
+        payment_method_id: methodId,
+        account_number: accountNumber
+      });
+      toast.success('Gusaba kwishyurwa byoherejwe neza!');
+      setShowPaymentModal(false);
+      // Refresh summary
+      const newSummary = await paymentsApi.getFarmerMonthlySummary();
+      setMonthlySummary(newSummary);
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setSubmittingPayment(false);
+    }
+  };
 
   // Paginated delivery records
   const totalPages = Math.ceil(milkRecords.length / itemsPerPage);
@@ -65,11 +100,16 @@ export function FarmerDashboard({ farmerName, onLogout }: FarmerDashboardProps) 
   const todaysLiters = safeSum(todaysRecords, 'liters');
 
 
-  const chartData = milkRecords.slice(0, 7).reverse().map(r => ({
-    date: new Date(r.collection_date).toLocaleDateString('en-RW', { day: 'numeric', month: 'short' }),
-    liters: safeNumber(r.liters),
-    earnings: safeNumber(r.total_amount)
-  }));
+  const chartData = useMemo(() => {
+    const days: Record<string, { liters: number; earnings: number }> = {};
+    milkRecords.forEach(r => {
+      const d = new Date(r.collection_date).toLocaleDateString('en-RW', { day: 'numeric', month: 'short' });
+      if (!days[d]) days[d] = { liters: 0, earnings: 0 };
+      days[d].liters += safeNumber(r.liters);
+      days[d].earnings += safeNumber(r.total_amount);
+    });
+    return Object.entries(days).slice(-14).reverse().map(([date, v]) => ({ date, ...v }));
+  }, [milkRecords]);
 
 
   if (loading) {
@@ -200,19 +240,83 @@ export function FarmerDashboard({ farmerName, onLogout }: FarmerDashboardProps) 
 
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-lg relative overflow-hidden group hover:shadow-xl transition-all">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                <Milk className="w-16 h-16 text-blue-600" />
+                <FontAwesomeIcon icon={faWallet} className="text-6xl text-purple-600" />
               </div>
-              <div className="relative z-10">
-                <p className="text-slate-500 font-medium text-sm">{t('dashboard.todaysEntry')}</p>
-                <h3 className="text-4xl font-bold text-slate-900 mt-2">{formatLiters(todaysLiters)}</h3>
+              <div className="relative z-10 h-full flex flex-col justify-between">
+                <div>
+                  <p className="text-slate-500 font-medium text-sm">Monthly Payout Status</p>
+                  <h3 className="text-3xl font-bold text-slate-900 mt-2">
+                    {monthlySummary ? formatCurrency(monthlySummary.total_amount) : '0'} RWF
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wider">Earnings this month</p>
+                </div>
 
-                <div className="mt-4 flex items-center gap-2 text-blue-600 text-xs font-bold bg-blue-50 px-2 py-1 rounded-lg w-fit">
-                  <FontAwesomeIcon icon={faClock} />
-                  <span>{t('dashboard.waitingCollection')}</span>
+                <div className="mt-4">
+                  {monthlySummary?.pendingRequest ? (
+                    <div className="flex items-center gap-2 text-orange-600 text-xs font-bold bg-orange-50 px-3 py-2 rounded-xl">
+                      <FontAwesomeIcon icon={faClock} />
+                      <span>Pending Payout: {formatCurrency(monthlySummary.pendingRequest.amount)} RWF</span>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => setShowPaymentModal(true)}
+                      className="w-full py-2 bg-purple-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200"
+                    >
+                      Pick Payment Method
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Payment Modal */}
+          {showPaymentModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+              <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+                <div className="p-8 bg-gradient-to-br from-purple-600 to-indigo-700 text-white relative">
+                  <button 
+                    onClick={() => setShowPaymentModal(false)}
+                    className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+                  >
+                    <FontAwesomeIcon icon={faTimes} />
+                  </button>
+                  <FontAwesomeIcon icon={faMoneyCheckAlt} className="text-4xl mb-4 opacity-80" />
+                  <h3 className="text-2xl font-black tracking-tight">Select Payment Method</h3>
+                  <p className="text-purple-100 text-sm mt-1">Amount to be requested: <span className="font-bold">{monthlySummary ? formatCurrency(monthlySummary.total_amount) : '0'} RWF</span></p>
+                </div>
+                <div className="p-8 space-y-4">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Available Options</p>
+                  <div className="space-y-3">
+                    {paymentMethods.map(method => (
+                      <button
+                        key={method.id}
+                        disabled={submittingPayment}
+                        onClick={() => handlePayoutRequest(method.id, userProfile?.phone || '')}
+                        className="w-full p-4 border border-slate-100 rounded-2xl flex items-center justify-between hover:border-purple-200 hover:bg-purple-50 group transition-all"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-white text-slate-400 group-hover:text-purple-600 transition-colors">
+                            <FontAwesomeIcon icon={faWallet} />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-bold text-slate-900">{method.name}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">Using: {userProfile?.phone || 'No phone set'}</p>
+                          </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full border-2 border-slate-100 flex items-center justify-center group-hover:border-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all text-transparent">
+                          <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-slate-400 italic text-center mt-6">
+                    Payment will be processed by your collector based on your monthly contract.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Charts & Notifications */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
@@ -250,20 +354,39 @@ export function FarmerDashboard({ farmerName, onLogout }: FarmerDashboardProps) 
                 </div>
               </div>
               <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                {notifications.length > 0 ? notifications.map((note) => (
-                  <div key={note.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex gap-4 hover:bg-slate-100 transition-colors cursor-pointer">
-                    <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${note.type === 'alert' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                      <FontAwesomeIcon icon={note.type === 'alert' ? faExclamationCircle : faBell} />
+                {notifications.length > 0 ? notifications.map((note) => {
+                  let icon = faBell;
+                  let colorClass = 'bg-green-100 text-green-600';
+                  
+                  if (note.type === 'urgent') {
+                    icon = faExclamationCircle;
+                    colorClass = 'bg-red-100 text-red-600';
+                  } else if (note.type === 'warning') {
+                    icon = faExclamationTriangle;
+                    colorClass = 'bg-orange-100 text-orange-600';
+                  } else if (note.type === 'concern' || note.type === 'high') {
+                    icon = note.type === 'high' ? faCheckCircle : faInfoCircle;
+                    colorClass = note.type === 'high' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600';
+                  } else if (note.type === 'alert') {
+                    icon = faExclamationCircle;
+                    colorClass = 'bg-red-100 text-red-600';
+                  }
+
+                  return (
+                    <div key={note.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex gap-4 hover:bg-slate-100 transition-colors cursor-pointer">
+                      <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${colorClass}`}>
+                        <FontAwesomeIcon icon={icon} />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm">{note.title}</h4>
+                        <p className="text-xs text-slate-500 mt-1">{note.message}</p>
+                        <p className="text-[10px] text-slate-400 mt-2 font-medium uppercase tracking-wider">
+                          {new Date(note.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm">{note.title}</h4>
-                      <p className="text-xs text-slate-500 mt-1">{note.message}</p>
-                      <p className="text-[10px] text-slate-400 mt-2 font-medium uppercase tracking-wider">
-                        {new Date(note.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                  </div>
-                )) : (
+                  );
+                }) : (
                   <div className="text-center py-10">
                     <FontAwesomeIcon icon={faBell} className="text-slate-200 text-4xl mb-3" />
                     <p className="text-slate-400 italic">{t('dashboard.noNotifications')}</p>

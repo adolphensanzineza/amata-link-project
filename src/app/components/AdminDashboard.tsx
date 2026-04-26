@@ -24,6 +24,8 @@ interface AdminDashboardProps {
 import AdminNotifications from './admin/AdminNotifications';
 import MessagesView from './MessagesView';
 import ReportView from './reports/ReportView';
+import ApprovalsView from './ApprovalsView';
+import PayoutsView from './collector/PayoutsView';
 
 interface User {
   id: number;
@@ -34,6 +36,7 @@ interface User {
   role: string;
   village: string | null;
   sector: string | null;
+  collector_name?: string;
   created_at: string;
 }
 
@@ -348,13 +351,13 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
 
   const dailyChartData = (() => {
     const days: Record<string, { liters: number; amount: number }> = {};
-    records.slice(0, 50).forEach(r => {
+    records.forEach(r => {
       const d = new Date(r.collection_date).toLocaleDateString('en-RW', { day: 'numeric', month: 'short' });
       if (!days[d]) days[d] = { liters: 0, amount: 0 };
       days[d].liters += Number(r.liters);
       days[d].amount += Number(r.total_amount);
     });
-    return Object.entries(days).slice(0, 7).reverse().map(([name, v]) => ({ name, liters: v.liters, amount: v.amount }));
+    return Object.entries(days).slice(-14).reverse().map(([name, v]) => ({ name, liters: v.liters, amount: v.amount }));
   })();
 
   const villageStats = Array.from(new Set(farmers.map(f => f.village))).map(village => ({
@@ -429,13 +432,17 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
 
           {activeItem === 'overview' && (
             <div className="space-y-10">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 sm:gap-6">
                 <StatCard icon={faDroplet} label={t('dashboard.totalMilk')} value={Number(stats.total_liters_all_time || 0).toLocaleString()} sub="L" gradient="from-blue-600 to-indigo-700" delay={0.1} />
-                <StatCard icon={faUsers} label={t('dashboard.activeFarmers')} value={farmers.length} gradient="from-emerald-500 to-teal-600" delay={0.2} />
-                <StatCard icon={faCow} label={t('dashboard.collectors')} value={collectors.length} gradient="from-orange-500 to-amber-600" delay={0.3} />
-                <StatCard icon={faCoins} label={t('dashboard.revenue')} value={Number(stats.total_earnings_all_time || 0).toLocaleString()} sub="RWF" gradient="from-purple-600 to-indigo-700" delay={0.4} />
-                <StatCard icon={faHistory} label={t('commission.totalCommission')} value={Math.round(totalCommission).toLocaleString()} sub="RWF" gradient="from-pink-600 to-rose-700" delay={0.5} />
-                <StatCard icon={faBell} label={t('dashboard.notifications')} value={stats.notification_count || 0} gradient="from-cyan-500 to-blue-600" delay={0.6} />
+                <StatCard icon={faDroplet} label="Today's Milk" value={Number(stats.today_liters || 0).toLocaleString()} sub="L" gradient="from-cyan-500 to-blue-600" delay={0.15} />
+                <StatCard icon={faCoins} label={t('dashboard.revenue')} value={Number(stats.total_earnings_all_time || 0).toLocaleString()} sub="RWF" gradient="from-purple-600 to-indigo-700" delay={0.2} />
+                <StatCard icon={faCoins} label="Today's Earnings" value={Number(stats.today_earnings || 0).toLocaleString()} sub="RWF" gradient="from-emerald-500 to-teal-600" delay={0.25} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 sm:gap-6">
+                <StatCard icon={faUsers} label={t('dashboard.activeFarmers')} value={farmers.length} gradient="from-emerald-500 to-teal-600" delay={0.3} />
+                <StatCard icon={faCow} label={t('dashboard.collectors')} value={collectors.length} gradient="from-orange-500 to-amber-600" delay={0.35} />
+                <StatCard icon={faHistory} label={t('commission.totalCommission')} value={Math.round(totalCommission).toLocaleString()} sub="RWF" gradient="from-pink-600 to-rose-700" delay={0.4} />
+                <StatCard icon={faBell} label={t('dashboard.notifications')} value={stats.notification_count || 0} gradient="from-cyan-500 to-blue-600" delay={0.45} />
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -479,8 +486,8 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 mt-auto">
-                    {villageStats.slice(0, 4).map((v, i) => (
+                  <div className="grid grid-cols-2 gap-3 mt-auto max-h-36 overflow-y-auto custom-scrollbar">
+                    {villageStats.map((v, i) => (
                       <div key={i} className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-100/50">
                         <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                         <span className="text-[10px] font-black text-slate-600 truncate uppercase tracking-widest">{v.name}</span>
@@ -573,7 +580,7 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
               searchPlaceholder={t('farmers.searchFarmers')}
               searchTerm={searchTerm}
               onSearch={setSearchTerm}
-              headers={[t('common.name'), t('common.email'), t('common.phone'), t('common.village'), t('common.joined'), t('common.actions')]}
+              headers={[t('common.name'), t('common.email'), t('common.phone'), t('common.village'), 'Collector', t('common.joined'), t('common.actions')]}
               rows={filteredFarmers.map(farmer => ({
                 key: farmer.id,
                 cells: [
@@ -590,6 +597,7 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     <span className="text-slate-600 font-medium italic">{farmer.village || 'N/A'}</span>
                   </div>,
+                  <span className="text-blue-600 font-black text-[11px] uppercase tracking-wider bg-blue-50 px-2 py-1 rounded-lg border border-blue-100/50">{farmer.collector_name || 'System / Admin'}</span>,
                   <span className="text-slate-400 font-bold text-[11px]">{new Date(farmer.created_at).toLocaleDateString()}</span>,
                   <div className="flex gap-2">
                     <button onClick={() => handleEditUser(farmer)} className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 flex items-center justify-center shadow-sm"><FontAwesomeIcon icon={faEdit} className="text-sm" /></button>
@@ -679,7 +687,7 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
               <div className="p-8 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-white to-slate-50/50">
                 <div>
                   <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t('milk.allRecords')}</h3>
-                  <p className="text-xs text-slate-400 font-medium mt-1">Real-time milk collection logs</p>
+                  <p className="text-xs text-slate-400 font-medium mt-1">Real-time milk collection logs &mdash; <span className="font-black text-slate-600">{filteredRecords.length}</span> of <span className="font-black text-slate-600">{records.length}</span> records</p>
                 </div>
                 <select
                   value={statusFilter}
@@ -866,7 +874,7 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
               <div className="bg-white rounded-3xl border border-slate-100 shadow-lg overflow-hidden">
                 <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-purple-50 to-indigo-50">
                   <h3 className="text-xl font-bold text-slate-900">Detailed Analytics - All Records</h3>
-                  <p className="text-sm text-slate-500">Complete breakdown of all milk collection records</p>
+                  <p className="text-sm text-slate-500">Complete breakdown of all {records.length} milk collection records</p>
                 </div>
                 <div className="overflow-x-auto max-h-[500px]">
                   <table className="w-full text-left">
@@ -884,7 +892,7 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {records.slice(0, 50).map((record, i) => (
+                      {records.map((record, i) => (
                         <tr key={record.id}>
                           <td className="px-4 py-3 text-slate-500 font-medium">{i + 1}</td>
                           <td className="px-4 py-3 text-slate-600">{new Date(record.collection_date).toLocaleDateString()}</td>
@@ -1039,6 +1047,8 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
             </>
           )}
 
+          {activeItem === 'payouts' && <PayoutsView />}
+          
           {activeItem === 'settings' && (
             <div className="max-w-4xl mx-auto space-y-8">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-6">

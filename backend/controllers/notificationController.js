@@ -114,10 +114,58 @@ async function sendSMS(phone, farmerName, litres, earnings, date, time) {
   }
 }
 
+/**
+ * Send a production feedback SMS to a farmer.
+ */
+async function sendProductionFeedbackSMS(phone, farmerName, quantity, level) {
+  const brevoApiKey = process.env.BREVO_API_KEY;
+  const smsApiUrl = 'https://api.brevo.com/v3/transactionalSMS/sms';
+  const sender = (process.env.BREVO_SMS_SENDER || 'AmataLink').slice(0, 11);
+
+  const to = normalizePhone(phone);
+  if (!to || !brevoApiKey) return;
+
+  const messages = {
+    high: {
+      kinya: `AmataLink: Umusaruro (${quantity}L) ni mwiza! Komereza aho kwita ku matungo neza.`,
+      english: `AmataLink: Production (${quantity}L) is excellent! Keep up the good work.`
+    },
+    warning: {
+      kinya: `AmataLink: Umusaruro (${quantity}L) wagabanutseho gato. Genzura imirire n'ubuzima bwayo.`,
+      english: `AmataLink: Production (${quantity}L) dropped slightly. Monitor feed and health.`
+    },
+    concern: {
+      kinya: `AmataLink: Umusaruro (${quantity}L) uri hasi cyane. Fata ingamba zihuse kugira ngo ube mwiza.`,
+      english: `AmataLink: Production (${quantity}L) is low. Take action to improve quality.`
+    },
+    urgent: {
+      kinya: `AmataLink: Umusaruro (${quantity}L) ni muke cyane mu buryo buteye inkeke. Shaka VET vuba!`,
+      english: `AmataLink: Production (${quantity}L) is critical/very low. Seek VET assistance immediately!`
+    }
+  };
+
+  const msg = messages[level] || messages.concern;
+  const content = `${msg.kinya} ${msg.english}`;
+
+  try {
+    await axios.post(
+      smsApiUrl,
+      { sender, recipient: to, content, type: 'transactional' },
+      { headers: { 'Content-Type': 'application/json', 'api-key': brevoApiKey } }
+    );
+    console.log(`✅ Production SMS (${level}) sent to ${farmerName}`);
+  } catch (error) {
+    console.error(`❌ Production SMS failed for ${farmerName}:`, error.response?.data || error.message);
+  }
+}
+
 // ─── CRUD Notification Endpoints ─────────────────────────────────────────────
 
 // Get user notifications
 export const getNotifications = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
   try {
     const userId = req.user.id;
     const [notifications] = await pool.execute(
@@ -149,6 +197,9 @@ export const markAsRead = async (req, res) => {
 
 // Get unread count
 export const getUnreadCount = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
   try {
     const userId = req.user.id;
     const [result] = await pool.execute(
@@ -446,6 +497,7 @@ async function sendImprovedMessage(type, data) {
 export {
   sendEmail,
   sendSMS,
+  sendProductionFeedbackSMS,
   sendImprovedMessage,
   sendDailyMilkSummary,
   sendAdminMilkAlert,

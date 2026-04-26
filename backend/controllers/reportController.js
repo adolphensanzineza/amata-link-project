@@ -6,6 +6,10 @@ import ExcelJS from 'exceljs';
 export const exportPDF = async (req, res) => {
     try {
         const { startDate, endDate, farmerId } = req.query;
+
+        if (!req.user) {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
         const { role, id: userId } = req.user;
 
         let query = `
@@ -160,6 +164,10 @@ export const exportPDF = async (req, res) => {
 export const exportExcel = async (req, res) => {
     try {
         const { startDate, endDate, farmerId } = req.query;
+
+        if (!req.user) {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
         const { role, id: userId } = req.user;
 
         let query = `
