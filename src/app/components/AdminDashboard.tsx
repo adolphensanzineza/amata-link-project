@@ -144,6 +144,7 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
     milkPricePerLiter: 500
   });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [targetContactId, setTargetContactId] = useState<number | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -298,6 +299,11 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
     } finally {
       setReportLoading(false);
     }
+  };
+
+  const handleMessageUser = (userId: number) => {
+    setTargetContactId(userId);
+    setActiveItem('messages');
   };
 
   const handleSaveSettings = async () => {
@@ -599,7 +605,8 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
                   </div>,
                   <span className="text-blue-600 font-black text-[11px] uppercase tracking-wider bg-blue-50 px-2 py-1 rounded-lg border border-blue-100/50">{farmer.collector_name || 'System / Admin'}</span>,
                   <span className="text-slate-400 font-bold text-[11px]">{new Date(farmer.created_at).toLocaleDateString()}</span>,
-                  <div className="flex gap-2">
+                   <div className="flex gap-2">
+                    <button onClick={() => handleMessageUser(farmer.id)} className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all duration-300 flex items-center justify-center shadow-sm" title="Message Farmer"><FontAwesomeIcon icon={faEnvelope} className="text-sm" /></button>
                     <button onClick={() => handleEditUser(farmer)} className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 flex items-center justify-center shadow-sm"><FontAwesomeIcon icon={faEdit} className="text-sm" /></button>
                     <button onClick={() => handleDeleteUser(farmer.id)} className="w-9 h-9 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-300 flex items-center justify-center shadow-sm"><FontAwesomeIcon icon={faTrash} className="text-sm" /></button>
                   </div>
@@ -632,7 +639,8 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
                     <span className="text-slate-600 font-medium italic">{collector.sector || 'N/A'}</span>
                   </div>,
                   <span className="text-slate-400 font-bold text-[11px]">{new Date(collector.created_at).toLocaleDateString()}</span>,
-                  <div className="flex gap-2">
+                   <div className="flex gap-2">
+                    <button onClick={() => handleMessageUser(collector.id)} className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 flex items-center justify-center shadow-sm" title="Message Collector"><FontAwesomeIcon icon={faEnvelope} className="text-sm" /></button>
                     <button onClick={() => handleEditUser(collector)} className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 flex items-center justify-center shadow-sm"><FontAwesomeIcon icon={faEdit} className="text-sm" /></button>
                     <button onClick={() => handleDeleteUser(collector.id)} className="w-9 h-9 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-300 flex items-center justify-center shadow-sm"><FontAwesomeIcon icon={faTrash} className="text-sm" /></button>
                   </div>
@@ -928,7 +936,7 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
 
           {activeItem === 'notifications' && <AdminNotifications />}
 
-          {activeItem === 'messages' && <MessagesView />}
+          {activeItem === 'messages' && <MessagesView initialContactId={targetContactId} />}
 
           {activeItem === 'reports' && (
             <>

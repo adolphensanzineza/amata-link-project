@@ -22,7 +22,11 @@ interface Message {
     created_at: string;
 }
 
-export default function MessagesView() {
+interface MessagesViewProps {
+    initialContactId?: number | null;
+}
+
+export default function MessagesView({ initialContactId = null }: MessagesViewProps) {
     const { t } = useI18n();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -46,6 +50,13 @@ export default function MessagesView() {
         const interval = setInterval(fetchContacts, 15000); // Poll contacts every 15s
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        if (initialContactId && contacts.length > 0) {
+            const contact = contacts.find(c => c.id === initialContactId);
+            if (contact) setSelectedContact(contact);
+        }
+    }, [initialContactId, contacts]);
 
     useEffect(() => {
         if (selectedContact) {

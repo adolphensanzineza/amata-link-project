@@ -72,6 +72,7 @@ export function Sidebar({ role, userName, onLogout, activeItem, onItemSelect }: 
         { id: 'reports', label: t('sidebar.reports'), icon: faFileAlt, roles: ['admin', 'collector', 'farmer'] },
         { id: 'approvals', label: 'Approvals', icon: faUserPlus, roles: ['admin', 'collector'] },
         { id: 'payouts', label: 'Payouts', icon: faCoins, roles: ['admin', 'collector'] },
+        { id: 'settings', label: t('sidebar.settings'), icon: faCog, roles: ['admin'] },
         { id: 'settings-collector', label: t('sidebar.settings'), icon: faCog, roles: ['collector'] },
         { id: 'messages', label: 'Messages', icon: faEnvelope, roles: ['admin', 'collector', 'farmer'] },
     ];

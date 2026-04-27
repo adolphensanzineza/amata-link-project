@@ -3,7 +3,7 @@ import {
   faUsers, faCow, faChartPie, faPlusCircle, faCheckCircle, faTimesCircle,
   faPhone, faMapMarkerAlt, faChevronLeft, faChevronRight,
   faBell, faFileInvoice, faDroplet, faCoins, faHistory,
-  faEdit, faTrash, faSearch, faClock, faMoneyBillWave
+  faEdit, faTrash, faSearch, faClock, faMoneyBillWave, faEnvelope
 } from '@fortawesome/free-solid-svg-icons';
 
 import { safeSum, safeNumber, safeMultiply, safeRound, formatCurrency, formatLiters } from '../utils/math';
@@ -226,6 +226,7 @@ export function CollectorDashboard({ collectorName, onLogout }: CollectorDashboa
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [targetContactId, setTargetContactId] = useState<number | null>(null);
 
   // Pagination and filtering
   const filteredFarmers = useMemo(() => {
@@ -326,6 +327,11 @@ export function CollectorDashboard({ collectorName, onLogout }: CollectorDashboa
     }
   };
 
+  const handleMessageUser = (userId: number) => {
+    setTargetContactId(userId);
+    setActiveItem('messages');
+  };
+
   const handleAddFarmer = async (formData: any) => {
     try {
       setLoading(true);
@@ -358,7 +364,7 @@ export function CollectorDashboard({ collectorName, onLogout }: CollectorDashboa
         {activeItem === 'my-deliveries' && <MyDeliveriesView />}
         {activeItem === 'analytics-collector' && <CollectorAnalytics />}
         {activeItem === 'notifications' && <CollectorNotifications />}
-        {activeItem === 'messages' && <MessagesView />}
+        {activeItem === 'messages' && <MessagesView initialContactId={targetContactId} />}
         {activeItem === 'reports' && <ReportView />}
         {activeItem === 'settings-collector' && <CollectorSettings />}
         {activeItem === 'approvals' && <ApprovalsView roleToApprove="farmer" />}
@@ -508,12 +514,21 @@ export function CollectorDashboard({ collectorName, onLogout }: CollectorDashboa
                 <span className="font-bold text-emerald-600">{formatLiters(farmer.total_liters_delivered)}</span>,
 
 
-                <button
-                  onClick={() => handleRecordMilk(farmer)}
-                  className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
-                >
-                  Record Milk
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleRecordMilk(farmer)}
+                    className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+                  >
+                    Record Milk
+                  </button>
+                  <button
+                    onClick={() => handleMessageUser(farmer.user_id)}
+                    className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                    title="Message Farmer"
+                  >
+                    <FontAwesomeIcon icon={faEnvelope} />
+                  </button>
+                </div>
               ]
             }))}
             totalRow={
