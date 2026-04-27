@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 /** helper to send email via Brevo API */
-async function sendEmailViaAPI(email, fullName, subject, htmlContent) {
+/** helper to send email via Brevo API */
+async function sendEmailViaAPI(email, fullName, subject, htmlContent, retries = 3) {
   const brevoApiKey = process.env.BREVO_API_KEY;
   const brevoApiUrl = 'https://api.brevo.com/v3/smtp/email';
 
@@ -13,23 +14,37 @@ async function sendEmailViaAPI(email, fullName, subject, htmlContent) {
     return;
   }
 
-  try {
-    const emailData = {
-      sender: { name: process.env.FROM_NAME || 'AmataLink', email: process.env.FROM_EMAIL },
-      to: [{ email, name: fullName }],
-      subject,
-      htmlContent,
-    };
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const emailData = {
+        sender: { name: process.env.FROM_NAME || 'AmataLink', email: process.env.FROM_EMAIL },
+        to: [{ email, name: fullName }],
+        subject,
+        htmlContent,
+      };
 
-    await axios.post(brevoApiUrl, emailData, {
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': brevoApiKey,
-      },
-    });
-    console.log(`✅ Email sent to ${email}`);
-  } catch (error) {
-    console.error(`❌ Failed to send email to ${email}:`, error.response?.data || error.message);
+      await axios.post(brevoApiUrl, emailData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': brevoApiKey,
+          'User-Agent': 'AmataLink-Backend/1.0',
+        },
+        timeout: 15000, // 15 seconds timeout
+      });
+      console.log(`✅ Email sent to ${email} (attempt ${attempt})`);
+      return; // Success, exit
+    } catch (error) {
+      const isRetryable = error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || error.message.includes('timeout') || (error.response?.status >= 500);
+      
+      if (attempt < retries && isRetryable) {
+        console.warn(`⚠️ Attempt ${attempt} failed to send email to ${email}: ${error.message}. Retrying in 2s...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
+      }
+
+      console.error(`❌ Failed to send email to ${email} after ${attempt} attempts:`, error.response?.data || error.message);
+      if (!isRetryable) break; // Don't retry if it's a 4xx error or similar
+    }
   }
 }
 
