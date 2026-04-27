@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faEnvelope, faUserCircle, faSearch, faPlus, faClock, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faEnvelope, faUserCircle, faSearch, faPlus, faClock, faCheckDouble, faEdit, faTrash, faTimes, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { useI18n } from '../i18n';
+import { toast } from 'sonner';
 
 interface Contact {
     id: number;
@@ -27,6 +28,8 @@ export default function MessagesView() {
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
+    const [editingMsgId, setEditingMsgId] = useState<number | null>(null);
+    const [editingContent, setEditingContent] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -96,8 +99,42 @@ export default function MessagesView() {
             setNewMessage('');
         } catch (error) {
             console.error('Error sending message:', error);
+            toast.error('Failed to send message');
         } finally {
             setSending(false);
+        }
+    };
+
+    const handleUpdateMessage = async (msgId: number) => {
+        if (!editingContent.trim()) return;
+        try {
+            const token = localStorage.getItem('amatalink_token');
+            await axios.put(`http://localhost:5001/api/messages/${msgId}`, {
+                message: editingContent
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setMessages(messages.map(m => m.id === msgId ? { ...m, message: editingContent } : m));
+            setEditingMsgId(null);
+            toast.success('Message updated');
+        } catch (error) {
+            console.error('Error updating message:', error);
+            toast.error('Failed to update message');
+        }
+    };
+
+    const handleDeleteMessage = async (msgId: number) => {
+        if (!window.confirm('Are you sure you want to delete this message?')) return;
+        try {
+            const token = localStorage.getItem('amatalink_token');
+            await axios.delete(`http://localhost:5001/api/messages/${msgId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setMessages(messages.filter(m => m.id !== msgId));
+            toast.success('Message deleted');
+        } catch (error) {
+            console.error('Error deleting message:', error);
+            toast.error('Failed to delete message');
         }
     };
 
@@ -204,22 +241,57 @@ export default function MessagesView() {
                             {messages.map((msg) => (
                                 <div 
                                     key={msg.id} 
-                                    className={`flex ${msg.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
+                                    className={`flex group/msg ${msg.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
                                 >
-                                    <div className={`max-w-[80%] px-6 py-4 rounded-[1.5rem] ${
+                                    <div className={`max-w-[80%] relative px-6 py-4 rounded-[1.5rem] transition-all ${
                                         msg.sender_id === user.id 
-                                            ? 'bg-emerald-600 text-white rounded-tr-sm shadow-xl shadow-emerald-500/20' 
+                                            ? 'bg-emerald-600 text-white rounded-tr-sm shadow-xl shadow-emerald-500/20 hover:bg-emerald-700' 
                                             : 'bg-white border border-slate-100 text-slate-900 rounded-tl-sm shadow-sm'
                                     }`}>
-                                        <p className="font-medium text-sm leading-relaxed">{msg.message}</p>
-                                        <div className={`flex items-center gap-2 mt-2 ${msg.sender_id === user.id ? 'text-emerald-100' : 'text-slate-400'}`}>
-                                            <span className="text-[8px] font-black uppercase tracking-widest">
-                                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </span>
-                                            {msg.sender_id === user.id && (
-                                                <FontAwesomeIcon icon={faCheckDouble} className={`text-[8px] ${msg.is_read ? 'text-white' : 'text-white/40'}`} />
-                                            )}
-                                        </div>
+                                        {editingMsgId === msg.id ? (
+                                            <div className="flex flex-col gap-2 min-w-[200px]">
+                                                <textarea
+                                                    value={editingContent}
+                                                    onChange={(e) => setEditingContent(e.target.value)}
+                                                    className="w-full bg-emerald-500/20 text-white border border-emerald-400/30 rounded-xl p-2 outline-none focus:ring-1 focus:ring-white/50 text-sm"
+                                                    rows={2}
+                                                    autoFocus
+                                                />
+                                                <div className="flex justify-end gap-2">
+                                                    <button onClick={() => setEditingMsgId(null)} className="p-1 text-white/70 hover:text-white"><FontAwesomeIcon icon={faTimes} /></button>
+                                                    <button onClick={() => handleUpdateMessage(msg.id)} className="p-1 text-white hover:scale-110"><FontAwesomeIcon icon={faCheck} /></button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <p className="font-medium text-sm leading-relaxed">{msg.message}</p>
+                                                <div className={`flex items-center gap-2 mt-2 ${msg.sender_id === user.id ? 'text-emerald-100/70' : 'text-slate-400'}`}>
+                                                    <span className="text-[8px] font-black uppercase tracking-widest">
+                                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                    {msg.sender_id === user.id && (
+                                                        <FontAwesomeIcon icon={faCheckDouble} className={`text-[8px] ${msg.is_read ? 'text-white' : 'text-white/40'}`} />
+                                                    )}
+                                                </div>
+                                                
+                                                {msg.sender_id === user.id && (
+                                                    <div className="absolute top-1/2 -left-12 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
+                                                        <button 
+                                                            onClick={() => { setEditingMsgId(msg.id); setEditingContent(msg.message); }}
+                                                            className="w-8 h-8 bg-white border border-slate-100 text-slate-400 rounded-full flex items-center justify-center hover:text-emerald-500 hover:shadow-lg transition-all"
+                                                        >
+                                                            <FontAwesomeIcon icon={faEdit} className="text-[10px]" />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDeleteMessage(msg.id)}
+                                                            className="w-8 h-8 bg-white border border-slate-100 text-slate-400 rounded-full flex items-center justify-center hover:text-rose-500 hover:shadow-lg transition-all"
+                                                        >
+                                                            <FontAwesomeIcon icon={faTrash} className="text-[10px]" />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             ))}

@@ -112,4 +112,51 @@ export const sendMessage = async (req, res) => {
     }
 };
 
-export default { getContacts, getMessages, sendMessage };
+export const updateMessage = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+        const { message } = req.body;
+
+        if (!message) {
+            return res.status(400).json({ message: 'Message text required' });
+        }
+
+        const [result] = await pool.execute(`
+            UPDATE messages SET message = ? 
+            WHERE id = ? AND sender_id = ?
+        `, [message, id, userId]);
+
+        if (result.affectedRows === 0) {
+            return res.status(403).json({ message: 'Unauthorized or message not found' });
+        }
+
+        res.json({ id, message });
+    } catch (error) {
+        console.error('updateMessage error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const deleteMessage = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        const [result] = await pool.execute(`
+            DELETE FROM messages 
+            WHERE id = ? AND sender_id = ?
+        `, [id, userId]);
+
+        if (result.affectedRows === 0) {
+            return res.status(403).json({ message: 'Unauthorized or message not found' });
+        }
+
+        res.json({ message: 'Message deleted successfully', id });
+    } catch (error) {
+        console.error('deleteMessage error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export default { getContacts, getMessages, sendMessage, updateMessage, deleteMessage };
