@@ -31,7 +31,7 @@ export default function MessagesView() {
     const [sending, setSending] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const user = JSON.parse(localStorage.getItem('amatalink_user') || '{}');
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,20 +55,21 @@ export default function MessagesView() {
 
     const fetchContacts = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('amatalink_token');
             const res = await axios.get('http://localhost:5001/api/messages/contacts', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setContacts(res.data);
-            setLoading(false);
         } catch (error) {
             console.error('Error fetching contacts:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
     const fetchMessages = async (otherUserId: number) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('amatalink_token');
             const res = await axios.get(`http://localhost:5001/api/messages/${otherUserId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -84,7 +85,7 @@ export default function MessagesView() {
 
         setSending(true);
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('amatalink_token');
             const res = await axios.post('http://localhost:5001/api/messages', {
                 receiverId: selectedContact.id,
                 message: newMessage
