@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cron from 'node-cron';
 import pool from './config/database.js';
 
 // Import routes
@@ -10,6 +11,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import { generateAndSendMonthlyReports } from './controllers/automatedReportController.js';
 
 dotenv.config();
 
@@ -31,6 +33,15 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reports', reportRoutes);
+
+// Schedule Monthly Reports: Runs at 00:00 on the 1st day of every month
+cron.schedule('0 0 1 * *', () => {
+  console.log('Running scheduled Monthly Report Generation...');
+  generateAndSendMonthlyReports();
+}, {
+  scheduled: true,
+  timezone: "Africa/Kigali"
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

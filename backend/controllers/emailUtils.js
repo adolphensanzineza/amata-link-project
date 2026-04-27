@@ -5,7 +5,7 @@ dotenv.config();
 
 /** helper to send email via Brevo API */
 /** helper to send email via Brevo API */
-async function sendEmailViaAPI(email, fullName, subject, htmlContent, retries = 3) {
+async function sendEmailViaAPI(email, fullName, subject, htmlContent, attachments = [], retries = 3) {
   const brevoApiKey = process.env.BREVO_API_KEY;
   const brevoApiUrl = 'https://api.brevo.com/v3/smtp/email';
 
@@ -23,27 +23,31 @@ async function sendEmailViaAPI(email, fullName, subject, htmlContent, retries = 
         htmlContent,
       };
 
+      if (attachments && attachments.length > 0) {
+        emailData.attachments = attachments;
+      }
+
       await axios.post(brevoApiUrl, emailData, {
         headers: {
           'Content-Type': 'application/json',
           'api-key': brevoApiKey,
           'User-Agent': 'AmataLink-Backend/1.0',
         },
-        timeout: 15000, // 15 seconds timeout
+        timeout: 15000,
       });
       console.log(`✅ Email sent to ${email} (attempt ${attempt})`);
-      return; // Success, exit
+      return;
     } catch (error) {
       const isRetryable = error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || error.message.includes('timeout') || (error.response?.status >= 500);
       
       if (attempt < retries && isRetryable) {
-        console.warn(`⚠️ Attempt ${attempt} failed to send email to ${email}: ${error.message}. Retrying in 2s...`);
+        console.warn(`⚠️ Attempt ${attempt} failed to send email to ${email}: ${error.message}. Retrying...`);
         await new Promise(resolve => setTimeout(resolve, 2000));
         continue;
       }
 
       console.error(`❌ Failed to send email to ${email} after ${attempt} attempts:`, error.response?.data || error.message);
-      if (!isRetryable) break; // Don't retry if it's a 4xx error or similar
+      if (!isRetryable) break;
     }
   }
 }
@@ -400,4 +404,46 @@ export const sendPriceChangeEmail = async (email, fullName, oldPrice, newPrice) 
   }
 };
 
-export default { sendVerificationEmail, sendResetPasswordEmail, sendRegistrationStatusEmail, sendMilkProductionFeedbackEmail, sendRegistrationPendingEmail, sendPayoutStatusEmail, sendPriceChangeEmail };
+export const sendMonthlyReportEmail = async (email, fullName, monthName, pdfBuffer, fileName) => {
+  const mailOptions = {
+    subject: `AmataLink: Raporo y'ukwezi kwa ${monthName} / Monthly Report for ${monthName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 32px; text-align: center;">
+          <h1 style="color: #fff; margin: 0; font-size: 24px; font-weight: 800;">AmataLink</h1>
+          <p style="color: #d1fae5; margin: 8px 0 0; font-size: 13px;">Automated Monthly Report</p>
+        </div>
+        <div style="padding: 32px;">
+          <h2 style="color: #111; margin-top: 0; font-size: 20px;">Muraho, ${fullName}!</h2>
+          <p>Twishimiye kukoherereza raporo y'uburyo wagurishije amata mu kwezi kwa <strong>${monthName}</strong>. Raporo irambuye wayisanga mu mugereka (attachment) w'iyi imeri.</p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+
+          <h2 style="color: #111; font-size: 20px;">Hello, ${fullName}!</h2>
+          <p>Please find attached your comprehensive milk collection report for the month of <strong>${monthName}</strong>.</p>
+          <p>The PDF includes a daily breakdown of your deliveries, rates, and total earnings for the period.</p>
+
+          <p style="margin-top: 30px;">Murakoze / Best regards,<br><strong>AmataLink Team</strong></p>
+        </div>
+        <div style="background: #f9fafb; padding: 16px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
+          <p style="margin: 0; font-size: 11px; color: #9ca3af;">This is an automated system generated report.</p>
+        </div>
+      </div>
+    `
+  };
+
+  const attachments = [
+    {
+      content: pdfBuffer.toString('base64'),
+      name: fileName
+    }
+  ];
+
+  try {
+    await sendEmailViaAPI(email, fullName, mailOptions.subject, mailOptions.html, attachments);
+  } catch (error) {
+    console.error('Monthly Report Email error:', error);
+  }
+};
+
+export default { sendVerificationEmail, sendResetPasswordEmail, sendRegistrationStatusEmail, sendMilkProductionFeedbackEmail, sendRegistrationPendingEmail, sendPayoutStatusEmail, sendPriceChangeEmail, sendMonthlyReportEmail };

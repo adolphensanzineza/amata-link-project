@@ -2,6 +2,101 @@ import pool from '../config/database.js';
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
 
+export const buildPDFReport = (records, startDate, endDate, doc, isBuffer = false) => {
+    // Header
+    doc.fillColor('#1e293b').fontSize(24).font('Helvetica-Bold').text('AmataLink Dairy Network', { align: 'center' });
+    doc.fontSize(10).font('Helvetica').text('Efficient Milk Productivity Management', { align: 'center' });
+    doc.moveDown();
+
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor('#e2e8f0').stroke();
+    doc.moveDown();
+
+    // Report Title & Meta
+    doc.fillColor('#0f172a').fontSize(16).font('Helvetica-Bold').text('Milk Collection Report', { underline: true });
+    doc.fontSize(10).font('Helvetica').fillColor('#64748b');
+    doc.text(`Generated on: ${new Date().toLocaleString()}`);
+    doc.text(`Period: ${startDate || 'All Time'} to ${endDate || 'Present'}`);
+    doc.moveDown();
+
+    // Table Header
+    const tableTop = doc.y;
+    const itemHeight = 25;
+
+    const drawRow = (y, data, isHeader = false) => {
+        if (isHeader) {
+            doc.rect(50, y, 500, itemHeight).fill('#f1f5f9');
+            doc.fillColor('#475569').font('Helvetica-Bold');
+        } else {
+            doc.fillColor('#1e293b').font('Helvetica');
+        }
+
+        const cols = [
+            { label: 'Date', x: 60, w: 80 },
+            { label: 'Farmer', x: 140, w: 150 },
+            { label: 'Liters', x: 300, w: 60 },
+            { label: 'Amount (RWF)', x: 370, w: 90 },
+            { label: 'Status', x: 470, w: 70 }
+        ];
+
+        cols.forEach(col => {
+            doc.text(isHeader ? col.label : data[col.label.toLowerCase().replace(/ /g, '_')] || '', col.x, y + 7, { width: col.w, truncate: true });
+        });
+
+        doc.moveTo(50, y + itemHeight).lineTo(550, y + itemHeight).strokeColor('#f1f5f9').stroke();
+    };
+
+    drawRow(tableTop, {}, true);
+
+    let currentY = tableTop + itemHeight;
+    let totalLiters = 0;
+    let totalAmount = 0;
+
+    records.forEach((rec, index) => {
+        if (currentY + itemHeight > 700) {
+            doc.addPage();
+            currentY = 50;
+            drawRow(currentY, {}, true);
+            currentY += itemHeight;
+        }
+
+        const rowData = {
+            date: new Date(rec.collection_date).toLocaleDateString(),
+            farmer: rec.farmer_name,
+            liters: `${rec.liters} L`,
+            amount_rwf: `${rec.total_amount.toLocaleString()} RWF`,
+            status: (rec.status || 'confirmed').toUpperCase()
+        };
+
+        drawRow(currentY, rowData);
+        currentY += itemHeight;
+
+        totalLiters += Number(rec.liters);
+        totalAmount += Number(rec.total_amount);
+    });
+
+    // Summary
+    doc.moveDown();
+    if (currentY + 100 > 750) doc.addPage();
+
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#0f172a').text('Summary Total', 370);
+    doc.fontSize(10).font('Helvetica').text(`Total Liters: ${totalLiters.toFixed(2)} L`, 370);
+    doc.text(`Total Amount: ${totalAmount.toLocaleString()} RWF`, 370);
+
+    // Footer
+    const pages = doc.bufferedPageRange();
+    for (let i = 0; i < pages.count; i++) {
+        doc.switchToPage(i);
+        doc.fontSize(8).fillColor('#94a3b8').text(
+            `Page ${i + 1} of ${pages.count} - AmataLink Dairy Network - Log of AmataLink`,
+            50,
+            750,
+            { align: 'center', width: 500 }
+        );
+    }
+
+    doc.end();
+};
+
 // Export PDF Report
 export const exportPDF = async (req, res) => {
     try {
@@ -29,9 +124,6 @@ export const exportPDF = async (req, res) => {
             query += ' AND f.user_id = ?';
             params.push(userId);
         } else if (role === 'collector') {
-            // Collectors can see all but usually focus on their own or all farmers in their center
-            // For now, let's allow collectors to see all farmer records they've recorded
-            // Or if a farmerId is provided, filter by that
             if (farmerId) {
                 query += ' AND f.user_id = ?';
                 params.push(farmerId);
@@ -61,99 +153,7 @@ export const exportPDF = async (req, res) => {
         res.setHeader('Content-type', 'application/pdf');
 
         doc.pipe(res);
-
-        // Header
-        doc.fillColor('#1e293b').fontSize(24).font('Helvetica-Bold').text('AmataLink Dairy Network', { align: 'center' });
-        doc.fontSize(10).font('Helvetica').text('Efficient Milk Productivity Management', { align: 'center' });
-        doc.moveDown();
-
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor('#e2e8f0').stroke();
-        doc.moveDown();
-
-        // Report Title & Meta
-        doc.fillColor('#0f172a').fontSize(16).font('Helvetica-Bold').text('Milk Collection Report', { underline: true });
-        doc.fontSize(10).font('Helvetica').fillColor('#64748b');
-        doc.text(`Generated on: ${new Date().toLocaleString()}`);
-        doc.text(`Period: ${startDate || 'All Time'} to ${endDate || 'Present'}`);
-        doc.moveDown();
-
-        // Table Header
-        const tableTop = doc.y;
-        const itemHeight = 25;
-
-        const drawRow = (y, data, isHeader = false) => {
-            if (isHeader) {
-                doc.rect(50, y, 500, itemHeight).fill('#f1f5f9');
-                doc.fillColor('#475569').font('Helvetica-Bold');
-            } else {
-                doc.fillColor('#1e293b').font('Helvetica');
-            }
-
-            const cols = [
-                { label: 'Date', x: 60, w: 80 },
-                { label: 'Farmer', x: 140, w: 150 },
-                { label: 'Liters', x: 300, w: 60 },
-                { label: 'Amount (RWF)', x: 370, w: 90 },
-                { label: 'Status', x: 470, w: 70 }
-            ];
-
-            cols.forEach(col => {
-                doc.text(isHeader ? col.label : data[col.label.toLowerCase().replace(/ /g, '_')] || '', col.x, y + 7, { width: col.w, truncate: true });
-            });
-
-            doc.moveTo(50, y + itemHeight).lineTo(550, y + itemHeight).strokeColor('#f1f5f9').stroke();
-        };
-
-        drawRow(tableTop, {}, true);
-
-        let currentY = tableTop + itemHeight;
-        let totalLiters = 0;
-        let totalAmount = 0;
-
-        records.forEach((rec, index) => {
-            if (currentY + itemHeight > 700) {
-                doc.addPage();
-                currentY = 50;
-                drawRow(currentY, {}, true);
-                currentY += itemHeight;
-            }
-
-            const rowData = {
-                date: new Date(rec.collection_date).toLocaleDateString(),
-                farmer: rec.farmer_name,
-                liters: `${rec.liters} L`,
-                amount_rwf: `${rec.total_amount.toLocaleString()} RWF`,
-                status: rec.status.toUpperCase()
-            };
-
-            drawRow(currentY, rowData);
-            currentY += itemHeight;
-
-            totalLiters += Number(rec.liters);
-            totalAmount += Number(rec.total_amount);
-        });
-
-        // Summary
-        doc.moveDown();
-        if (currentY + 100 > 750) doc.addPage();
-
-        doc.fontSize(12).font('Helvetica-Bold').fillColor('#0f172a').text('Summary Total', 370);
-        doc.fontSize(10).font('Helvetica').text(`Total Liters: ${totalLiters.toFixed(2)} L`, 370);
-        doc.text(`Total Amount: ${totalAmount.toLocaleString()} RWF`, 370);
-
-        // Footer
-        const pages = doc.bufferedPageRange();
-        for (let i = 0; i < pages.count; i++) {
-            doc.switchToPage(i);
-            doc.fontSize(8).fillColor('#94a3b8').text(
-                `Page ${i + 1} of ${pages.count} - AmataLink Dairy Network - Log of AmataLink`,
-                50,
-                750,
-                { align: 'center', width: 500 }
-            );
-        }
-
-        doc.end();
+        buildPDFReport(records, startDate, endDate, doc);
     } catch (error) {
         console.error('PDF Export Error:', error);
         res.status(500).json({ message: 'Error generating PDF report' });
