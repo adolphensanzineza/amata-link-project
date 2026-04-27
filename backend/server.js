@@ -11,6 +11,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 import { generateAndSendMonthlyReports } from './controllers/automatedReportController.js';
 
 dotenv.config();
@@ -33,6 +34,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Schedule Monthly Reports: Runs at 00:00 on the 1st day of every month
 cron.schedule('0 0 1 * *', () => {
