@@ -159,4 +159,20 @@ export const deleteMessage = async (req, res) => {
     }
 };
 
-export default { getContacts, getMessages, sendMessage, updateMessage, deleteMessage };
+export const getUnreadCount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const [rows] = await pool.execute(`
+            SELECT COUNT(*) as unreadCount 
+            FROM messages 
+            WHERE receiver_id = ? AND is_read = 0
+        `, [userId]);
+        
+        res.json({ unreadCount: rows[0].unreadCount });
+    } catch (error) {
+        console.error('getUnreadCount error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export default { getContacts, getMessages, sendMessage, updateMessage, deleteMessage, getUnreadCount };

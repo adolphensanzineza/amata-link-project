@@ -166,3 +166,7 @@ export const paymentsApi = {
         body: JSON.stringify({ status })
     })
 };
+
+export const messagesApi = {
+    getUnreadCount: () => apiFetch('/messages/unread-count'),
+};

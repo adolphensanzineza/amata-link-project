@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '../i18n';
 import { useEffect, useState as reactUseState } from 'react';
-import { notificationsApi, adminApi, paymentsApi } from '../api';
+import { notificationsApi, adminApi, paymentsApi, messagesApi } from '../api';
 
 interface SidebarProps {
     role: 'admin' | 'collector' | 'farmer';
@@ -24,13 +24,19 @@ export function Sidebar({ role, userName, onLogout, activeItem, onItemSelect }: 
     const [unreadCount, setUnreadCount] = reactUseState(0);
     const [pendingCount, setPendingCount] = reactUseState(0);
     const [pendingPayoutCount, setPendingPayoutCount] = reactUseState(0);
+    const [unreadMessageCount, setUnreadMessageCount] = reactUseState(0);
 
     useEffect(() => {
         const fetchCounts = async () => {
             try {
-                const notes = await notificationsApi.getNotifications();
+                const [notes, unreadMsg] = await Promise.all([
+                    notificationsApi.getNotifications(),
+                    messagesApi.getUnreadCount()
+                ]);
+                
                 const unread = notes.filter((n: any) => !n.read).length;
                 setUnreadCount(unread);
+                setUnreadMessageCount(unreadMsg.unreadCount);
 
                 if (role === 'admin' || role === 'collector') {
                     const pendingRole = role === 'admin' ? 'collector' : 'farmer';
@@ -146,6 +152,11 @@ export function Sidebar({ role, userName, onLogout, activeItem, onItemSelect }: 
                             {item.id === 'payouts' && pendingPayoutCount > 0 && (
                                 <span className="ml-auto bg-purple-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-purple-500/20">
                                     {pendingPayoutCount}
+                                </span>
+                            )}
+                            {item.id === 'messages' && unreadMessageCount > 0 && (
+                                <span className="ml-auto bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-emerald-500/20">
+                                    {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
                                 </span>
                             )}
                         </button>

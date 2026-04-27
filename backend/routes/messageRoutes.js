@@ -4,6 +4,7 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+router.get('/unread-count', authenticateToken, getUnreadCount);
 router.get('/contacts', authenticateToken, getContacts);
 router.get('/:otherUserId', authenticateToken, getMessages);
 router.post('/', authenticateToken, sendMessage);
