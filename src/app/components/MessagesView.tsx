@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faEnvelope, faUserCircle, faSearch, faPlus, faClock, faCheckDouble, faEdit, faTrash, faTimes, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faEnvelope, faUserCircle, faSearch, faPlus, faClock, faCheckDouble, faEdit, faTrash, faTimes, faCheck, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 import { useI18n } from '../i18n';
 import { toast } from 'sonner';
 
@@ -280,7 +280,17 @@ export default function MessagesView() {
                                                 </div>
                                             ) : (
                                                 <>
-                                                    <p className="font-medium text-sm leading-relaxed">{msg.message}</p>
+                                                    <div className="flex justify-between items-start gap-4">
+                                                        <p className="font-medium text-sm leading-relaxed">{msg.message}</p>
+                                                        {msg.sender_id === user.id && (
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); setActionMsgId(actionMsgId === msg.id ? null : msg.id); }}
+                                                                className="opacity-0 group-hover/msg:opacity-100 transition-opacity p-1 -mr-2 text-white/50 hover:text-white"
+                                                            >
+                                                                <FontAwesomeIcon icon={faEllipsisV} className="text-xs" />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                     <div className={`flex items-center gap-2 mt-2 ${msg.sender_id === user.id ? 'text-emerald-100/70' : 'text-slate-400'}`}>
                                                         <span className="text-[8px] font-black uppercase tracking-widest">
                                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
