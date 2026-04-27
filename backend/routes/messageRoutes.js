@@ -1,5 +1,5 @@
 import express from 'express';
-import { getContacts, getMessages, sendMessage } from '../controllers/messageController.js';
+import { getContacts, getMessages, sendMessage, updateMessage, deleteMessage } from '../controllers/messageController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
