@@ -443,7 +443,7 @@ export const createUser = async (req, res) => {
     const hashedPassword = await bcrypt.default.hash(password, 10);
 
     const [result] = await pool.execute(
-      'INSERT INTO users (username, email, password, full_name, phone, role, village, sector, email_verified, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, "approved")',
+      "INSERT INTO users (username, email, password, full_name, phone, role, village, sector, email_verified, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 'approved')",
       [username, email, hashedPassword, fullName, phone, role, village || null, sector || null]
     );
 
@@ -919,7 +919,7 @@ export const getPendingUsers = async (req, res) => {
   try {
     const { role } = req.query; // 'farmer' or 'collector'
     
-    let query = 'SELECT id, username, email, full_name, phone, role, village, sector, created_at FROM users WHERE status = "pending"';
+    let query = "SELECT id, username, email, full_name, phone, role, village, sector, created_at FROM users WHERE status = 'pending'";
     const params = [];
 
     if (role) {
@@ -975,7 +975,7 @@ export const approveUser = async (req, res) => {
     }
 
     // 3. Update status to approved
-    await pool.execute('UPDATE users SET status = "approved" WHERE id = ?', [id]);
+    await pool.execute("UPDATE users SET status = 'approved' WHERE id = ?", [id]);
 
     // 4. Send notification email
     const approverRole = req.user.role === 'admin' ? 'Admin' : 'Collector';
@@ -1001,7 +1001,7 @@ export const rejectUser = async (req, res) => {
       return res.status(403).json({ message: 'Collectors can only reject farmers' });
     }
 
-    await pool.execute('UPDATE users SET status = "rejected" WHERE id = ?', [id]);
+    await pool.execute("UPDATE users SET status = 'rejected' WHERE id = ?", [id]);
     
     // Send notification email
     const approverRole = req.user.role === 'admin' ? 'Admin' : 'Collector';

@@ -88,7 +88,7 @@ export const getFarmerMonthlySummary = async (req, res) => {
 
     // Also get last pending request if any
     const [pending] = await pool.execute(
-      'SELECT status, amount, request_date FROM payout_requests WHERE farmer_id = ? AND status = "pending" LIMIT 1',
+      "SELECT status, amount, request_date FROM payout_requests WHERE farmer_id = ? AND status = 'pending' LIMIT 1",
       [farmerDbId]
     );
 
@@ -115,7 +115,7 @@ export const initiatePayoutRequest = async (req, res) => {
 
     // Check if there is already a pending request
     const [existing] = await pool.execute(
-      'SELECT id FROM payout_requests WHERE farmer_id = ? AND status = "pending"',
+      "SELECT id FROM payout_requests WHERE farmer_id = ? AND status = 'pending'",
       [farmerDbId]
     );
 

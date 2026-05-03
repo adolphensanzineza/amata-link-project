@@ -117,6 +117,10 @@ export const addMilkRecord = async (req, res) => {
         feedbackMessageEng = `Slight decrease in production (${addedLiters}L). Monitor feed quality and health.`;
       }
 
+      // Map feedbackLevel to valid notifications.type enum values
+      const feedbackTypeMap = { urgent: 'alert', concern: 'system', warning: 'system', high: 'system' };
+      const feedbackNotifType = feedbackTypeMap[feedbackLevel] ?? 'system';
+
       // Add feedback notification for farmer
       await pool.execute(
         'INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)',
@@ -124,7 +128,7 @@ export const addMilkRecord = async (req, res) => {
           farmerId,
           feedbackSubjectKinya,
           `${feedbackMessageKinya} / ${feedbackMessageEng}`,
-          feedbackLevel
+          feedbackNotifType
         ]
       );
 
