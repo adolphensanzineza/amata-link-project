@@ -58,7 +58,9 @@
     "confirmDelete": "Are you sure you want to delete this?",
     "language": "Language",
     "english": "English",
-    "kinyarwanda": "Kinyarwanda"
+    "kinyarwanda": "Ikinyarwanda",
+    "and": "and",
+    "or": "or"
   },
   "navigation": {
     "home": "Home",
@@ -70,7 +72,8 @@
     "notifications": "Notifications",
     "logout": "Sign Out",
     "getStarted": "Get Started",
-    "learnMore": "Learn More"
+    "learnMore": "Learn More",
+    "signUp": "Sign Up"
   },
   "roles": {
     "admin": "Admin",
@@ -94,7 +97,17 @@
     "registrationFailed": "Registration failed. Please try again.",
     "logoutSuccess": "Logged out successfully",
     "selectRole": "Select Your Role",
-    "selectRoleSubtitle": "Choose how you want to use AmataLink"
+    "selectRoleSubtitle": "Choose how you want to use AmataLink",
+    "passwordMismatch": "Passwords do not match!",
+    "agreeToTerms": "Please agree to the terms and conditions",
+    "registrationPending": "Your registration is still pending approval.",
+    "agreeTo": "I agree to the",
+    "terms": "Terms and Conditions",
+    "privacy": "Privacy Policy",
+    "whyJoin": "Why Join AmataLink?",
+    "createAccount": "Create an account",
+    "signUpWithGoogle": "Sign up with Google",
+    "googleEmailHint": "We recommend using your Google email address."
   },
   "home": {
     "heroTitle": "Transforming Dairy Farming with Digital Solutions",
@@ -333,6 +346,53 @@
     "manageAccount": "Manage your account settings",
     "name": "Name",
     "email": "Email"
+  },
+  "about": {
+    "heroTitle": "About AmataLink",
+    "heroSubtitle": "Empowering dairy farmers and collectors in Rwanda through innovative digital solutions",
+    "missionTitle": "Our Mission",
+    "missionDesc": "To digitize and streamline the milk supply chain in rural Rwanda, ensuring transparency, accuracy, and fair compensation for all participants. We aim to replace paper-based systems with accessible digital solutions that empower farmers and collectors.",
+    "visionTitle": "Our Vision",
+    "visionDesc": "To become the leading milk productivity management platform across East Africa, fostering sustainable growth in the dairy industry through technology. We envision a future where every dairy farmer has access to transparent, real-time tracking of their production and earnings.",
+    "storyTitle": "Our Story",
+    "storyDesc1": "AmataLink was born from witnessing firsthand the challenges faced by dairy farmers in rural Rwanda. Traditional paper-based record-keeping led to disputes, lost records, and delayed payments.",
+    "storyDesc2": "In 2025, our founder, Sarah Mukamana, a former village collector, decided to leverage technology to solve these problems. With a team of passionate technologists and agricultural experts, we developed AmataLink - a simple, accessible platform designed specifically for Rwanda's dairy community.",
+    "storyDesc3": "Today, we serve over 100 farmers across multiple villages, processing thousands of liters of milk daily and ensuring transparent, accurate tracking from farm to collection center.",
+    "valuesTitle": "Our Core Values",
+    "valuesSubtitle": "The principles that guide everything we do",
+    "value1Title": "Transparency",
+    "value1Desc": "We believe in clear, honest communication with all stakeholders in the dairy supply chain.",
+    "value2Title": "Innovation",
+    "value2Desc": "Leveraging technology to solve real-world challenges faced by dairy farmers and collectors.",
+    "value3Title": "Collaboration",
+    "value3Desc": "Building partnerships between farmers, collectors, and administrators for mutual success.",
+    "teamTitle": "Meet Our Team",
+    "teamSubtitle": "Passionate individuals dedicated to transforming dairy farming",
+    "readyToJoin": "Ready to Join Us?",
+    "joinDesc": "Be part of the digital transformation in Rwanda's dairy industry"
+  },
+  "contact": {
+    "heroTitle": "Contact Us",
+    "heroSubtitle": "Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.",
+    "address": "Address",
+    "phone": "Phone",
+    "email": "Email",
+    "sendMessage": "Send us a Message",
+    "subjectLabel": "Subject *",
+    "selectSubject": "Select a subject",
+    "generalInquiry": "General Inquiry",
+    "techSupport": "Technical Support",
+    "partnership": "Partnership",
+    "feedback": "Feedback",
+    "messageLabel": "Message *",
+    "messagePlaceholder": "Tell us how we can help you...",
+    "sendButton": "Send Message",
+    "officeHours": "Office Hours",
+    "connectTitle": "Connect With Us",
+    "connectDesc": "Follow us on social media for updates, tips, and community stories",
+    "urgentHelp": "Need Urgent Help?",
+    "urgentDesc": "For urgent technical issues, please call our 24/7 support line:",
+    "successMessage": "Message sent successfully! We'll get back to you soon."
   },
   "errors": {
     "genericError": "Something went wrong. Please try again.",

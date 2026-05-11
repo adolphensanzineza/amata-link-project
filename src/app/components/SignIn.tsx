@@ -7,12 +7,15 @@ import { Milk } from 'lucide-react';
 import { authApi } from '../api';
 import { toast } from 'sonner';
 
+import { useI18n } from '../i18n';
+
 interface SignInProps {
   onNavigate: (page: string) => void;
   onSignIn: (role: 'farmer' | 'collector' | 'admin') => void;
 }
 
 export function SignIn({ onNavigate, onSignIn }: SignInProps) {
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -32,14 +35,14 @@ export function SignIn({ onNavigate, onSignIn }: SignInProps) {
       localStorage.setItem('amatalink_token', response.token);
       localStorage.setItem('amatalink_user', JSON.stringify(response.user));
 
-      toast.success('Login successful.');
+      toast.success(t('auth.loginSuccess'));
       onSignIn(response.user.role);
     } catch (error: any) {
       if (error.message && error.message.includes('pending')) {
-        toast.info('Your registration is still pending approval.');
+        toast.info(t('auth.registrationPending'));
         setTimeout(() => onNavigate('registration-pending'), 1000);
       } else {
-        toast.error(error.message || 'Sign in failed.');
+        toast.error(error.message || t('auth.loginFailed'));
       }
     }
   };
@@ -70,31 +73,31 @@ export function SignIn({ onNavigate, onSignIn }: SignInProps) {
               </div>
             </div>
             <h2 className="text-4xl text-gray-900 mb-2">
-              Welcome Back
+              {t('auth.loginTitle')}
             </h2>
             <p className="text-gray-600">
-              Sign in to your AmataLink account
+              {t('auth.loginSubtitle')}
             </p>
           </div>
 
           {/* Sign In Form */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
               {/* Email */}
               <div>
                 <label className="block text-sm text-gray-700 mb-2">
                   <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
-                  Email Address
+                  {t('common.email')}
                 </label>
                 <input
                   type="email"
                   name="email"
-                  autoComplete="email"
+                  autoComplete="off"
                   value={formData.email}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="your.email@example.com"
+                  placeholder={t('auth.emailPlaceholder')}
                 />
               </div>
 
@@ -102,18 +105,18 @@ export function SignIn({ onNavigate, onSignIn }: SignInProps) {
               <div>
                 <label className="block text-sm text-gray-700 mb-2">
                   <FontAwesomeIcon icon={faLock} className="mr-2" />
-                  Password
+                  {t('common.password')}
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
-                    autoComplete="current-password"
+                    autoComplete="off"
                     value={formData.password}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-12"
-                    placeholder="Enter your password"
+                    placeholder={t('auth.passwordPlaceholder')}
                   />
                   <button
                     type="button"
@@ -132,14 +135,14 @@ export function SignIn({ onNavigate, onSignIn }: SignInProps) {
                     type="checkbox"
                     className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                   />
-                  <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                  <span className="ml-2 text-sm text-gray-600">{t('auth.rememberMe')}</span>
                 </label>
                 <button
                   type="button"
                   onClick={() => onNavigate('forgot-password')}
                   className="text-sm text-green-600 hover:text-green-700 cursor-pointer"
                 >
-                  Forgot password?
+                  {t('auth.forgotPassword')}
                 </button>
               </div>
 
@@ -149,24 +152,25 @@ export function SignIn({ onNavigate, onSignIn }: SignInProps) {
                 className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 cursor-pointer"
               >
                 <FontAwesomeIcon icon={faSignInAlt} />
-                Sign In
+                {t('common.signIn')}
               </button>
             </form>
 
             {/* Sign Up Link */}
             <div className="mt-6 text-center">
               <p className="text-gray-600">
-                Don't have an account?{' '}
+                {t('auth.dontHaveAccount')}{' '}
                 <button
                   onClick={() => onNavigate('signup')}
                   className="text-green-600 hover:text-green-700 flex items-center justify-center gap-2 mx-auto mt-2 cursor-pointer"
                 >
                   <FontAwesomeIcon icon={faUserPlus} />
-                  Create an account
+                  {t('auth.createAccount')}
                 </button>
               </p>
             </div>
           </div>
+
 
 
 

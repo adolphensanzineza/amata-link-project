@@ -11,31 +11,35 @@ import imgAdolphe from '../../assets/adolphe.jpeg';
 import imgFlorence from '../../assets/Mutima.jpeg';
 
 
+import { useI18n } from '../i18n';
+
 interface AboutUsProps {
   onNavigate: (page: string) => void;
 }
 
 export function AboutUs({ onNavigate }: AboutUsProps) {
+  const { t } = useI18n();
   const values = [
     {
       icon: faHeart,
-      title: 'Transparency',
-      description: 'We believe in clear, honest communication with all stakeholders in the dairy supply chain.',
+      title: t('about.value1Title'),
+      description: t('about.value1Desc'),
       color: 'from-red-500 to-pink-600',
     },
     {
       icon: faLightbulb,
-      title: 'Innovation',
-      description: 'Leveraging technology to solve real-world challenges faced by dairy farmers and collectors.',
+      title: t('about.value2Title'),
+      description: t('about.value2Desc'),
       color: 'from-yellow-500 to-orange-600',
     },
     {
       icon: faHandshake,
-      title: 'Collaboration',
-      description: 'Building partnerships between farmers, collectors, and administrators for mutual success.',
+      title: t('about.value3Title'),
+      description: t('about.value3Desc'),
       color: 'from-blue-500 to-cyan-600',
     },
   ];
+
 
   const team = [
     {
@@ -73,9 +77,9 @@ export function AboutUs({ onNavigate }: AboutUsProps) {
             className="text-center"
           >
             <FontAwesomeIcon icon={faInfoCircle} className="w-16 h-16 text-white mb-6" />
-            <h1 className="text-5xl text-white mb-6">About AmataLink</h1>
+            <h1 className="text-5xl text-white mb-6">{t('about.heroTitle')}</h1>
             <p className="text-xl text-green-100 max-w-3xl mx-auto">
-              Empowering dairy farmers and collectors in Rwanda through innovative digital solutions
+              {t('about.heroSubtitle')}
             </p>
           </motion.div>
         </div>
@@ -94,11 +98,9 @@ export function AboutUs({ onNavigate }: AboutUsProps) {
               <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mb-6">
                 <FontAwesomeIcon icon={faBullseye} className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-3xl text-gray-900 mb-4">Our Mission</h2>
+              <h2 className="text-3xl text-gray-900 mb-4">{t('about.missionTitle')}</h2>
               <p className="text-gray-600 leading-relaxed">
-                To digitize and streamline the milk supply chain in rural Rwanda, ensuring transparency,
-                accuracy, and fair compensation for all participants. We aim to replace paper-based systems
-                with accessible digital solutions that empower farmers and collectors.
+                {t('about.missionDesc')}
               </p>
             </motion.div>
 
@@ -111,11 +113,9 @@ export function AboutUs({ onNavigate }: AboutUsProps) {
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mb-6">
                 <FontAwesomeIcon icon={faChartLine} className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-3xl text-gray-900 mb-4">Our Vision</h2>
+              <h2 className="text-3xl text-gray-900 mb-4">{t('about.visionTitle')}</h2>
               <p className="text-gray-600 leading-relaxed">
-                To become the leading milk productivity management platform across East Africa, fostering
-                sustainable growth in the dairy industry through technology. We envision a future where
-                every dairy farmer has access to transparent, real-time tracking of their production and earnings.
+                {t('about.visionDesc')}
               </p>
             </motion.div>
           </div>
@@ -131,20 +131,15 @@ export function AboutUs({ onNavigate }: AboutUsProps) {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-4xl text-gray-900 mb-6">Our Story</h2>
+              <h2 className="text-4xl text-gray-900 mb-6">{t('about.storyTitle')}</h2>
               <p className="text-gray-600 mb-4 leading-relaxed">
-                AmataLink was born from witnessing firsthand the challenges faced by dairy farmers in rural Rwanda.
-                Traditional paper-based record-keeping led to disputes, lost records, and delayed payments.
+                {t('about.storyDesc1')}
               </p>
               <p className="text-gray-600 mb-4 leading-relaxed">
-                In 2025, our founder, Sarah Mukamana, a former village collector, decided to leverage technology
-                to solve these problems. With a team of passionate technologists and agricultural experts, we
-                developed AmataLink - a simple, accessible platform designed specifically for Rwanda's dairy
-                community.
+                {t('about.storyDesc2')}
               </p>
               <p className="text-gray-600 leading-relaxed">
-                Today, we serve over 100 farmers across multiple villages, processing thousands of liters
-                of milk daily and ensuring transparent, accurate tracking from farm to collection center.
+                {t('about.storyDesc3')}
               </p>
             </motion.div>
 
@@ -173,9 +168,9 @@ export function AboutUs({ onNavigate }: AboutUsProps) {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl text-gray-900 mb-4">Our Core Values</h2>
+            <h2 className="text-4xl text-gray-900 mb-4">{t('about.valuesTitle')}</h2>
             <p className="text-xl text-gray-600">
-              The principles that guide everything we do
+              {t('about.valuesSubtitle')}
             </p>
           </motion.div>
 
@@ -210,9 +205,9 @@ export function AboutUs({ onNavigate }: AboutUsProps) {
             className="text-center mb-16"
           >
             <FontAwesomeIcon icon={faUsers} className="w-16 h-16 text-green-500 mb-6" />
-            <h2 className="text-4xl text-white mb-4">Meet Our Team</h2>
+            <h2 className="text-4xl text-white mb-4">{t('about.teamTitle')}</h2>
             <p className="text-xl text-gray-300">
-              Passionate individuals dedicated to transforming dairy farming
+              {t('about.teamSubtitle')}
             </p>
           </motion.div>
 
@@ -249,9 +244,9 @@ export function AboutUs({ onNavigate }: AboutUsProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl text-white mb-6">Ready to Join Us?</h2>
+            <h2 className="text-4xl text-white mb-6">{t('about.readyToJoin')}</h2>
             <p className="text-xl text-green-100 mb-8">
-              Be part of the digital transformation in Rwanda's dairy industry
+              {t('about.joinDesc')}
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <button
@@ -259,14 +254,14 @@ export function AboutUs({ onNavigate }: AboutUsProps) {
                 className="px-8 py-4 bg-white text-green-600 rounded-lg hover:bg-green-50 transition-all shadow-lg text-lg flex items-center gap-2"
               >
                 <FontAwesomeIcon icon={faUserPlus} />
-                Sign Up Now
+                {t('common.signUp')}
               </button>
               <button
                 onClick={() => onNavigate('contact')}
-                className="px-8 py-4 bg-green-700 text-white rounded-lg hover:bg-green-800 transition-all border-2 border-white/30 text-lg flex items-center gap-2"
+                className="px-8 py-4 bg-green-700 text-white rounded-lg hover:bg-green-800 transition-all border-2 border-white/30 text-lg flex items-center gap-2 cursor-pointer"
               >
                 <FontAwesomeIcon icon={faEnvelope} />
-                Contact Us
+                {t('navigation.contact')}
               </button>
             </div>
           </motion.div>

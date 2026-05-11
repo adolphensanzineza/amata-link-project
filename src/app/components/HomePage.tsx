@@ -18,39 +18,43 @@ const keyframes = `
   }
 `;
 
+import { useI18n } from '../i18n';
+
 interface HomePageProps {
   onNavigate: (page: string) => void;
 }
 
-const features = [
-  {
-    icon: Smartphone,
-    title: 'Digital Milk Recording',
-    description: 'Replace paper notebooks with instant digital tracking. Record milk deliveries in real-time with our easy-to-use mobile interface.',
-    image: imgCowAndMilk,
-  },
-  {
-    icon: TrendingUp,
-    title: 'Automated Calculations',
-    description: 'Automatically calculate daily and monthly earnings for both farmers and collectors. No more manual errors or disputes.',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYXRhJTIwYW5hbHl0aWNzJTIwZGFzaGJvYXJkfGVufDF8fHx8MTc3MDk3NDUwNnww&ixlib=rb-4.1.0&q=80&w=1080',
-  },
-  {
-    icon: Bell,
-    title: 'Daily Notifications',
-    description: 'Farmers receive instant notifications confirming their milk delivery and daily earnings. Stay informed every step of the way.',
-    image: imgNotifications,
-  },
-];
-
-const stats = [
-  { value: '100+', label: 'Active Farmers' },
-  { value: '5,000L', label: 'Daily Collection' },
-  { value: '98%', label: 'Accuracy Rate' },
-  { value: '24/7', label: 'Support Available' },
-];
-
 export function HomePage({ onNavigate }: HomePageProps) {
+  const { t } = useI18n();
+
+  const features = [
+    {
+      icon: Smartphone,
+      title: t('home.feature1Title'),
+      description: t('home.feature1Desc'),
+      image: imgCowAndMilk,
+    },
+    {
+      icon: TrendingUp,
+      title: t('home.feature2Title'),
+      description: t('home.feature2Desc'),
+      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYXRhJTIwYW5hbHl0aWNzJTIwZGFzaGJvYXJkfGVufDF8fHx8MTc3MDk3NDUwNnww&ixlib=rb-4.1.0&q=80&w=1080',
+    },
+    {
+      icon: Bell,
+      title: t('home.feature3Title'),
+      description: t('home.feature3Desc'),
+      image: imgNotifications,
+    },
+  ];
+
+  const stats = [
+    { value: '100+', label: t('home.activeFarmers') },
+    { value: '5,000L', label: t('home.dailyCollection') },
+    { value: '98%', label: t('home.accuracyRate') },
+    { value: '24/7', label: t('home.supportAvailable') },
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -68,24 +72,24 @@ export function HomePage({ onNavigate }: HomePageProps) {
               transition={{ duration: 0.6 }}
             >
               <h1 className="text-5xl lg:text-6xl text-white mb-6 leading-tight font-black">
-                Transforming Dairy Farming with Digital Solutions
+                {t('home.heroTitle')}
               </h1>
               <p className="text-xl text-green-100 mb-8 leading-relaxed opacity-90">
-                AmataLink empowers farmers, collectors, and administrators with a comprehensive milk productivity management system. Track deliveries, calculate earnings, and manage your dairy supply chain effortlessly.
+                {t('home.heroSubtitle')}
               </p>
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={() => onNavigate('signin')}
                   className="px-8 py-4 bg-white text-green-600 rounded-2xl font-bold hover:bg-green-50 transition-all shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)] flex items-center gap-2 active:scale-95 cursor-pointer"
                 >
-                  Get Started
+                  {t('navigation.getStarted')}
                   <ArrowRight className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => onNavigate('about')}
                   className="px-8 py-4 bg-transparent text-white font-bold rounded-2xl hover:bg-white/10 transition-all border-2 border-white/30 active:scale-95 cursor-pointer"
                 >
-                  Learn More
+                  {t('navigation.learnMore')}
                 </button>
               </div>
             </motion.div>
@@ -115,8 +119,8 @@ export function HomePage({ onNavigate }: HomePageProps) {
                     <Milk className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Total Impact</p>
-                    <p className="text-xl font-black text-slate-900 leading-none">50k+ Liters</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">{t('home.totalImpact')}</p>
+                    <p className="text-xl font-black text-slate-900 leading-none">50k+ {t('common.litersUnit')}</p>
                   </div>
                 </div>
               </div>
@@ -181,7 +185,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
           {/* Trusted Partners / Icons row */}
           <div className="pt-12 border-t border-gray-200">
-            <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-10">Supporting Innovation In Dairy Supply Chain</p>
+            <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-10">SUPPORTING INNOVATION IN DAIRY SUPPLY CHAIN</p>
             <div className="flex flex-wrap justify-center items-center gap-12 lg:gap-20 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
               <div className="flex items-center gap-2 group">
                 <Shield className="w-8 h-8 text-slate-600 group-hover:text-blue-600" />
@@ -214,10 +218,10 @@ export function HomePage({ onNavigate }: HomePageProps) {
             className="text-center mb-16"
           >
             <h2 className="text-4xl lg:text-5xl text-gray-900 mb-4">
-              Powerful Features for Every User
+              {t('home.featuresTitle')}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              From milk collection to payment tracking, AmataLink provides all the tools you need to modernize your dairy operations.
+              {t('home.featuresSubtitle')}
             </p>
           </motion.div>
 
@@ -277,10 +281,10 @@ export function HomePage({ onNavigate }: HomePageProps) {
             className="text-center mb-16"
           >
             <h2 className="text-4xl lg:text-5xl text-white mb-4">
-              How AmataLink Works
+              {t('home.howItWorksTitle')}
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              A simple, streamlined process designed for efficiency
+              {t('home.howItWorksSubtitle')}
             </p>
           </motion.div>
 
@@ -289,20 +293,20 @@ export function HomePage({ onNavigate }: HomePageProps) {
               {
                 step: '01',
                 icon: Users,
-                title: 'Village Collection',
-                description: 'Village Collectors visit farmers and record milk deliveries digitally',
+                title: t('home.step1Title'),
+                description: t('home.step1Desc'),
               },
               {
                 step: '02',
                 icon: CheckCircle,
-                title: 'Sector Confirmation',
-                description: 'Sector Admin confirms total deliveries and validates records',
+                title: t('home.step2Title'),
+                description: t('home.step2Desc'),
               },
               {
                 step: '03',
                 icon: BarChart3,
-                title: 'Automated Reports',
-                description: 'System generates earnings and sends notifications automatically',
+                title: t('home.step3Title'),
+                description: t('home.step3Desc'),
               },
             ].map((step, index) => {
               const Icon = step.icon;
@@ -355,16 +359,16 @@ export function HomePage({ onNavigate }: HomePageProps) {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl lg:text-5xl text-white mb-6">
-              Ready to Transform Your Dairy Operations?
+              {t('home.ctaTitle')}
             </h2>
             <p className="text-xl text-green-100 mb-8">
-              Join hundreds of farmers and collectors who trust AmataLink for their milk productivity management.
+              {t('home.ctaSubtitle')}
             </p>
             <button
               onClick={() => onNavigate('signin')}
               className="px-10 py-4 bg-white text-green-600 rounded-lg hover:bg-green-50 transition-all shadow-lg hover:shadow-xl text-lg flex items-center gap-2 mx-auto cursor-pointer"
             >
-              Get Started Today
+              {t('home.ctaButton')}
               <ArrowRight className="w-5 h-5" />
             </button>
           </motion.div>
@@ -383,39 +387,39 @@ export function HomePage({ onNavigate }: HomePageProps) {
                 <span className="text-xl text-white">AmataLink</span>
               </div>
               <p className="text-gray-400">
-                Digitizing milk tracking and payment management for rural communities.
+                {t('home.footerDesc')}
               </p>
             </div>
             <div>
-              <h4 className="text-white mb-4">Quick Links</h4>
+              <h4 className="text-white mb-4">{t('home.quickLinks')}</h4>
 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
                 <button
                   onClick={() => onNavigate('home')}
                   className="group flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all hover:scale-105 hover:border-white/40"
                 >
                   <Home className="w-8 h-8 text-green-400 mb-2 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-medium text-white group-hover:text-green-200">Home</span>
+                  <span className="text-sm font-medium text-white group-hover:text-green-200">{t('navigation.home')}</span>
                 </button>
                 <button
                   onClick={() => onNavigate('about')}
                   className="group flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all hover:scale-105 hover:border-white/40"
                 >
                   <Info className="w-8 h-8 text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-medium text-white group-hover:text-blue-200">About Us</span>
+                  <span className="text-sm font-medium text-white group-hover:text-blue-200">{t('navigation.about')}</span>
                 </button>
                 <button
                   onClick={() => onNavigate('contact')}
                   className="group flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all hover:scale-105 hover:border-white/40"
                 >
                   <Mail className="w-8 h-8 text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-medium text-white group-hover:text-emerald-200">Contact</span>
+                  <span className="text-sm font-medium text-white group-hover:text-emerald-200">{t('navigation.contact')}</span>
                 </button>
                 <button
                   onClick={() => onNavigate('signup')}
                   className="group flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all hover:scale-105 hover:border-white/40"
                 >
                   <UserPlus className="w-8 h-8 text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-medium text-white group-hover:text-purple-200">Sign Up</span>
+                  <span className="text-sm font-medium text-white group-hover:text-purple-200">{t('common.signUp')}</span>
                 </button>
               </div>
             </div>
@@ -429,7 +433,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2026 AmataLink. All rights reserved.</p>
+            <p>{t('home.copyright')}</p>
           </div>
         </div>
       </footer>

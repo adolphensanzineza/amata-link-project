@@ -4,6 +4,9 @@ import { faSignInAlt, faUserPlus, faBars, faXmark, faHome, faInfoCircle, faEnvel
 import { Milk } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+import { LanguageSelector } from './LanguageSelector';
+import { useI18n } from '../i18n';
+
 interface NavigationProps {
   currentPage: string;
   onNavigate: (page: string) => void;
@@ -12,6 +15,7 @@ interface NavigationProps {
 export function Navigation({ currentPage, onNavigate }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,10 +29,10 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
   }, []);
 
   const navLinks = [
-    { id: 'home', label: 'Home', faIcon: faHome },
-    { id: 'about', label: 'About Us', faIcon: faInfoCircle },
-    { id: 'contact', label: 'Contact', faIcon: faEnvelope },
-    { id: 'signup', label: 'Sign Up', faIcon: faUserPlus },
+    { id: 'home', label: t('navigation.home'), faIcon: faHome },
+    { id: 'about', label: t('navigation.about'), faIcon: faInfoCircle },
+    { id: 'contact', label: t('navigation.contact'), faIcon: faEnvelope },
+    { id: 'signup', label: t('navigation.signUp'), faIcon: faUserPlus },
   ];
 
   return (
@@ -51,7 +55,7 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
                 Amata<span className="text-emerald-500">Link</span>
               </span>
               <span className="text-[10px] font-extrabold uppercase tracking-widest mt-1 text-slate-400">
-                Dairy Network
+                {t('common.appName')} Network
               </span>
             </div>
           </div>
@@ -77,6 +81,8 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
             </div>
 
             <div className="w-px h-6 bg-slate-200 mx-1" />
+            
+            <LanguageSelector />
 
             <button
               onClick={() => onNavigate('signin')}
@@ -86,9 +92,10 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
                 }`}
             >
               <FontAwesomeIcon icon={faSignInAlt} className="text-xs" />
-              Sign In
+              {t('common.signIn')}
             </button>
           </div>
+
 
           {/* Mobile Toggle */}
           <button
@@ -110,8 +117,12 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
             className="lg:hidden absolute top-full left-4 right-4 mt-4 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[101]"
           >
             <div className="p-6 space-y-4">
+              <div className="flex justify-between items-center px-6 py-2 border-b border-slate-50 mb-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('common.language')}</span>
+                <LanguageSelector />
+              </div>
               <div className="grid grid-cols-1 gap-2">
-                {[...navLinks, { id: 'signin', label: 'Sign In', faIcon: faSignInAlt }].map((link) => (
+                {[...navLinks, { id: 'signin', label: t('common.signIn'), faIcon: faSignInAlt }].map((link) => (
                   <button
                     key={link.id}
                     onClick={() => { onNavigate(link.id); setMobileMenuOpen(false); }}
@@ -124,6 +135,7 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
                 ))}
               </div>
             </div>
+
           </motion.div>
         )}
       </AnimatePresence>

@@ -10,7 +10,14 @@ interface ContactUsProps {
   onNavigate: (page: string) => void;
 }
 
+import { useI18n } from '../i18n';
+
+interface ContactUsProps {
+  onNavigate: (page: string) => void;
+}
+
 export function ContactUs({ onNavigate }: ContactUsProps) {
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -22,9 +29,10 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In production, this would send to a backend
-    toast.success('Message sent successfully! We\'ll get back to you soon.');
+    toast.success(t('contact.successMessage'));
     setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
   };
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -36,23 +44,24 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
   const contactInfo = [
     {
       icon: faMapMarkerAlt,
-      title: 'Address',
+      title: t('contact.address'),
       details: ['KG 11 Ave, Kigali', 'Rwanda, East Africa'],
       color: 'from-red-500 to-pink-600',
     },
     {
       icon: faPhone,
-      title: 'Phone',
+      title: t('contact.phone'),
       details: ['+250 792 951 577', '+250 786 449 511'],
       color: 'from-green-500 to-emerald-600',
     },
     {
       icon: faEnvelope,
-      title: 'Email',
+      title: t('contact.email'),
       details: ['info@amatalink.com', 'support@amatalink.com'],
       color: 'from-blue-500 to-cyan-600',
     },
   ];
+
 
   const socialMedia = [
     { icon: faFacebookBrand, name: 'Facebook', color: '#1877F2' },
@@ -74,9 +83,9 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
             className="text-center"
           >
             <FontAwesomeIcon icon={faEnvelope} className="w-16 h-16 text-white mb-6" />
-            <h1 className="text-5xl text-white mb-6">Contact Us</h1>
+            <h1 className="text-5xl text-white mb-6">{t('contact.heroTitle')}</h1>
             <p className="text-xl text-green-100 max-w-3xl mx-auto">
-              Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+              {t('contact.heroSubtitle')}
             </p>
           </motion.div>
         </div>
@@ -120,11 +129,11 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
               viewport={{ once: true }}
               className="bg-white rounded-2xl shadow-lg p-8"
             >
-              <h2 className="text-3xl text-gray-900 mb-6">Send us a Message</h2>
+              <h2 className="text-3xl text-gray-900 mb-6">{t('contact.sendMessage')}</h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm text-gray-700 mb-2">
-                    Full Name *
+                    {t('common.fullName')} *
                   </label>
                   <input
                     type="text"
@@ -133,13 +142,13 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Your name"
+                    placeholder={t('common.fullName')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm text-gray-700 mb-2">
-                    Email Address *
+                    {t('common.email')} *
                   </label>
                   <input
                     type="email"
@@ -148,13 +157,13 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="your.email@example.com"
+                    placeholder={t('auth.emailPlaceholder')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm text-gray-700 mb-2">
-                    Phone Number
+                    {t('common.phone')}
                   </label>
                   <input
                     type="tel"
@@ -162,13 +171,13 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
                     value={formData.phone}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="+250 788 000 000"
+                    placeholder={t('common.phone')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm text-gray-700 mb-2">
-                    Subject *
+                    {t('contact.subjectLabel')}
                   </label>
                   <select
                     name="subject"
@@ -177,17 +186,17 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
-                    <option value="">Select a subject</option>
-                    <option value="general">General Inquiry</option>
-                    <option value="support">Technical Support</option>
-                    <option value="partnership">Partnership</option>
-                    <option value="feedback">Feedback</option>
+                    <option value="">{t('contact.selectSubject')}</option>
+                    <option value="general">{t('contact.generalInquiry')}</option>
+                    <option value="support">{t('contact.techSupport')}</option>
+                    <option value="partnership">{t('contact.partnership')}</option>
+                    <option value="feedback">{t('contact.feedback')}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm text-gray-700 mb-2">
-                    Message *
+                    {t('contact.messageLabel')}
                   </label>
                   <textarea
                     name="message"
@@ -196,7 +205,7 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
                     required
                     rows={6}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-                    placeholder="Tell us how we can help you..."
+                    placeholder={t('contact.messagePlaceholder')}
                   />
                 </div>
 
@@ -205,7 +214,7 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
                   className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                 >
                   <FontAwesomeIcon icon={faPaperPlane} />
-                  Send Message
+                  {t('contact.sendButton')}
                 </button>
               </form>
             </motion.div>
@@ -219,7 +228,7 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
             >
               {/* Office Hours */}
               <div className="bg-white rounded-2xl shadow-lg p-8">
-                <h3 className="text-2xl text-gray-900 mb-6">Office Hours</h3>
+                <h3 className="text-2xl text-gray-900 mb-6">{t('contact.officeHours')}</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between py-2 border-b">
                     <span className="text-gray-600">Monday - Friday</span>
@@ -238,9 +247,9 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
 
               {/* Social Media */}
               <div className="bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl shadow-lg p-8">
-                <h3 className="text-2xl text-white mb-6">Connect With Us</h3>
+                <h3 className="text-2xl text-white mb-6">{t('contact.connectTitle')}</h3>
                 <p className="text-green-100 mb-6">
-                  Follow us on social media for updates, tips, and community stories
+                  {t('contact.connectDesc')}
                 </p>
                 <div className="grid grid-cols-2 gap-4">
                   {socialMedia.map((social, index) => (
@@ -260,9 +269,9 @@ export function ContactUs({ onNavigate }: ContactUsProps) {
 
               {/* Emergency Contact */}
               <div className="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-6">
-                <h4 className="text-lg text-orange-900 mb-2">Need Urgent Help?</h4>
+                <h4 className="text-lg text-orange-900 mb-2">{t('contact.urgentHelp')}</h4>
                 <p className="text-orange-700 mb-3">
-                  For urgent technical issues, please call our 24/7 support line:
+                  {t('contact.urgentDesc')}
                 </p>
                 <a
                   href="tel:+250788000000"

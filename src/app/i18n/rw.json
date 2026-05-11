@@ -58,7 +58,9 @@
     "confirmDelete": "Uremeza ko ushaka gusiba ibi?",
     "language": "Ururimi",
     "english": "Icyongereza",
-    "kinyarwanda": "Ikinyarwanda"
+    "kinyarwanda": "Ikinyarwanda",
+    "and": "na",
+    "or": "cyangwa"
   },
   "navigation": {
     "home": "Ahabanza",
@@ -70,7 +72,8 @@
     "notifications": "Amakuru",
     "logout": "Sohoka",
     "getStarted": "Tangira",
-    "learnMore": "Menya byinshi"
+    "learnMore": "Menya byinshi",
+    "signUp": "Iyandikishe"
   },
   "roles": {
     "admin": "Umuyobozi",
@@ -94,7 +97,17 @@
     "registrationFailed": "Kwiyandikisha ntibyakunze. Ongera ugerageze.",
     "logoutSuccess": "Wasohotse neza",
     "selectRole": "Hitamo Uruhare Rwawe",
-    "selectRoleSubtitle": "Hitamo uburyo ushaka gukoresha AmataLink"
+    "selectRoleSubtitle": "Hitamo uburyo ushaka gukoresha AmataLink",
+    "passwordMismatch": "Amagambo y'ibanga ntahuye!",
+    "agreeToTerms": "Wemere amategeko n'amabwiriza",
+    "registrationPending": "Kwiyandikisha kwawe kuracyategereje kwemezwa.",
+    "agreeTo": "Nemeye",
+    "terms": "Amategeko n'Amabwiriza",
+    "privacy": "Politiki y'Icyihiru",
+    "whyJoin": "Kuki wagera muri AmataLink?",
+    "createAccount": "Fungura konti",
+    "signUpWithGoogle": "Iyandikishe na Google",
+    "googleEmailHint": "Turakugira inama yo gukoresha imeyili ya Google."
   },
   "home": {
     "heroTitle": "Guhindura Ubworozi bw'Inka Ukoresheje Ikoranabuhanga",
@@ -328,6 +341,53 @@
     "manageAccount": "Gucunga igenamiterere rya konti yawe",
     "name": "Izina",
     "email": "Imeyili"
+  },
+  "about": {
+    "heroTitle": "Ibyerekeye AmataLink",
+    "heroSubtitle": "Guha ubushobozi abahinzi n'abakusanyi b'amata mu Rwanda binyuze mu mishinga y'ikoranabuhanga",
+    "missionTitle": "Inshingano Zacu",
+    "missionDesc": "Gushyira mu ikoranabuhanga no kuringaniza urukurikirane rw'amata mu cyaro cy'u Rwanda, hizezwa umucyo, ukuri, n'inyungu ikwiye kuri bose. Tugamije gusimbuza uburyo bw'impapuro n'uburyo bw'ikoranabuhanga bworoheye buri wese buha ubushobozi abahinzi n'abakusanyi.",
+    "visionTitle": "Icyerekezo Cyacu",
+    "visionDesc": "Kuba uburyo bw'ikoranabuhanga buza imbere mu gucunga umusaruro w'amata muri Afurika y'Iburasirazuba, guteza imbere iterambere rirambye mu nganda z'amata binyuze mu buhanga. Twifuza igihe kizaza aho buri muhinzi w'amata agira uburyo bwo gukurikirana umusaruro we n'inyungu ze ku gihe.",
+    "storyTitle": "Amateka Yacu",
+    "storyDesc1": "AmataLink yavutse imaze kubona imbogamizi abahinzi b'amata bahura nazo mu cyaro cy'u Rwanda. Uburyo bwa kera bw'impapuro bwatezaga amakimbirane, kubura amakuru, no gutinda kwishyurwa.",
+    "storyDesc2": "Muri 2025, washinze uyu mushinga, Sarah Mukamana, wahoze ari umukusanyi ku mudugudu, yafashe icyemezo cyo gukoresha ikoranabuhanga mu gukemura ibi bibazo. Hamwe n'itsinda ry'inzobere mu by'ikoranabuhanga n'ubuhinzi, twakoze AmataLink - uburyo bworoshye kandi bugera kuri bose bwagenewe umuryango w'aborozi mu Rwanda.",
+    "storyDesc3": "Uyu munsi, dukorana n'abahinzi barenga 100 mu midugudu itandukanye, tukanandika amalitiro ibihumbi buri munsi kandi tukizera gukurikirana amata ku buryo bw'umucyo kuva ku muhinzi kugeza ku kigo gikurikirana.",
+    "valuesTitle": "Indangagaciro Zacu",
+    "valuesSubtitle": "Amahame atuyobora mu byo dukora byose",
+    "value1Title": "Umucyo",
+    "value1Desc": "Twizera itumanaho risobanutse kandi rirangwa n'ubunyangamugayo n'abafatanyabikorwa bose.",
+    "value2Title": "Guhanga Udushya",
+    "value2Desc": "Gukoresha ikoranabuhanga mu gukemura imbogamizi nyazo abahinzi n'abakusanyi bahura nazo.",
+    "value3Title": "Ubufatanye",
+    "value3Desc": "Wubaka ubufatanye hagati y'abahinzi, abakusanyi, n'abayobozi kugirango bose bagere ku ntego.",
+    "teamTitle": "Itsinda Ryacu",
+    "teamSubtitle": "Abantu bafite ishyaka ryo guhindura ubworozi bw'inshinjyi",
+    "readyToJoin": "Witeguye Kwifatanya Natwe?",
+    "joinDesc": "Ba umwe mu bagira uruhare mu mpinduka z'ikoranabuhanga mu nganda z'amata mu Rwanda"
+  },
+  "contact": {
+    "heroTitle": "Twandikire",
+    "heroSubtitle": "Ufite ibibazo? Twishimiye kukumva. Tuohereze ubutumwa kandi tuzagusubiza vuba bishoboka.",
+    "address": "Aho Turi",
+    "phone": "Telefoni",
+    "email": "Imeyili",
+    "sendMessage": "Tuohereze Ubutumwa",
+    "subjectLabel": "Icyo Wandikira *",
+    "selectSubject": "Hitamo icyo wandikira",
+    "generalInquiry": "Ikibazo rusange",
+    "techSupport": "Ubufasha mu by'ikoranabuhanga",
+    "partnership": "Ubufatanye",
+    "feedback": "Igitekerezo",
+    "messageLabel": "Ubutumwa *",
+    "messagePlaceholder": "Tubwire uko twagufasha...",
+    "sendButton": "Ohereza Ubutumwa",
+    "officeHours": "Amasaha y'Akazi",
+    "connectTitle": "Twandikire ku Mbuga Nkoranyambaga",
+    "connectDesc": "Tukurikirane ku mbuga nkoranyambaga kugirango umenye amakuru mashya n'amateka y'umuryango",
+    "urgentHelp": "Ukeneye Ubufasha bwihuse?",
+    "urgentDesc": "Ku bibazo by'imbere by'ikoranabuhanga, hamagara uyu murongo ufunguye 24/7:",
+    "successMessage": "Ubutumwa bwoherejwe neza! Tuzagusubiza vuba."
   },
   "errors": {
     "genericError": "Hari ikitagenze neza. Ongera ugerageze.",

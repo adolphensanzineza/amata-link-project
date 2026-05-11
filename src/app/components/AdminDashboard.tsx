@@ -1109,23 +1109,38 @@ export function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('settings.name')}</label>
-                            <input type="text" defaultValue={adminName} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-900" />
+                            <input type="text" placeholder={adminName || "Your Name"} autoComplete="off" className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-900" />
                           </div>
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('settings.email')}</label>
-                            <input type="email" defaultValue="admin@amatalink.com" className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-900" />
+                            <input type="email" placeholder="email@example.com" autoComplete="off" className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-900" />
                           </div>
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
-                            <input type="text" defaultValue="+250 788 123 456" className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-900" />
+                            <input type="text" placeholder="+250 ..." className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-900" />
                           </div>
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Office Location</label>
-                            <input type="text" defaultValue="Kigali, Rwanda" className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-900" />
+                            <input type="text" placeholder="Kigali, Rwanda" className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-900" />
                           </div>
+                        </div>
+
+                        <div className="mt-10 pt-10 border-t border-slate-50">
+                          <h5 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4">Admin Management</h5>
+                          <button
+                            onClick={() => {
+                              setCreateForm({ ...createForm, role: 'admin' });
+                              setIsCreateModalOpen(true);
+                            }}
+                            className="flex items-center gap-3 px-6 py-4 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:bg-slate-800 transition-all active:scale-95"
+                          >
+                            <FontAwesomeIcon icon={faUserShield} className="text-emerald-400" />
+                            Register New System Admin
+                          </button>
                         </div>
                       </div>
                     </motion.div>
+
                   )}
 
                   {settingsTab === 'prefs' && (
